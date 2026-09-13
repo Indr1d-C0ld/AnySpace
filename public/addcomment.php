@@ -1,0 +1,44 @@
+<?php
+require_once("../core/conn.php");
+require_once("../core/settings.php");
+require("../core/site/user.php"); 
+require("../core/site/comment.php");
+
+login_check();
+
+$toid = isset($_GET['id']) ? (int)$_GET['id'] : 0; 
+$parentId = isset($_GET['reply']) ? $_GET['reply'] : null; 
+
+if (isset($_SESSION['user'], $_POST['submit'], $_POST['comment']) && !empty($_POST['comment'])) {
+    $authorId = $_SESSION['userId']; 
+    $commentText = trim($_POST['comment']);
+
+    if (addComment($toid, $authorId, $commentText, $parentId)) {
+        header("Location: comments.php?id=$toid");
+        exit;
+    } else {
+        echo "<p>Errore durante l'aggiunta del commento.</p>";
+    }
+}
+
+?>
+
+<?php require_once("header.php") ?>
+
+<div class="row edit-profile">
+  <div class="col w-20 left">
+    <!-- Sidebar goes here -->
+  </div>
+  <div class="col right">
+    <h2>Aggiungi Commento</h2>
+    <p>Sii gentile.</p>
+        <form method="post" class="ctrl-enter-submit">
+      <label for="comment"><h4>Il tuo Commento:</h4></label>
+      <textarea class="big_textarea" id="comment" name="comment" required autofocus></textarea>
+      <button type="submit" name="submit">Aggiungi Commento</button>
+      <a href="profile.php?id=<?= $toid ?>"><button type="button">Annulla</button></a>
+    </form>
+  </div>
+</div>
+
+<?php require_once("footer.php") ?>

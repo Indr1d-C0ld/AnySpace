@@ -1,0 +1,32 @@
+<?php
+// Configurazione runtime di AnySpace. Questo file va copiato FUORI dal
+// docroot servito da Apache/Nginx (es. /etc/anyspace/config.php o
+// /data/anyspace-config/config.php) e referenziato da core/config.php,
+// che lo carica con:
+//
+//   extract(require '/percorso/fuori/dal/docroot/config.php');
+//
+// Non lasciare mai questo file (con valori reali) dentro il docroot.
+return array(
+    // Connessione al database (MySQL/MariaDB)
+    'host'     => 'localhost',
+    'dbname'   => 'anyspace',
+    'username' => 'anyspace',
+    'password' => '',
+
+    // Nome e dominio del sito (usato nei link assoluti e nelle e-mail)
+    'siteName'   => 'AnySpace',
+    'domainName' => 'tuo-dominio.tld', // puoi usare anche un indirizzo IP
+
+    // Percorso base se il sito NON è servito dalla radice del dominio
+    // (es. '' se è su https://tuo-dominio.tld/, '/anyspace' se è su
+    // https://tuo-dominio.tld/anyspace/)
+    'basePath' => '',
+
+    // ID utente (colonna users.id) che ha accesso al pannello /admin/
+    'adminUser' => 1,
+
+    // Mostra i dettagli degli errori invece della pagina generica: SOLO
+    // in sviluppo, mai in produzione
+    'debug' => false,
+);

@@ -1,0 +1,27 @@
+<?php
+// Configurazione e-mail transazionale di AnySpace (verifica indirizzo,
+// reset password, notifiche). Come config.php, va tenuta FUORI dal docroot
+// e referenziata da core/email_config.php con:
+//
+//   return require '/percorso/fuori/dal/docroot/email_config.php';
+//
+// Se lasci smtp_host vuoto, l'invio e-mail viene semplicemente saltato
+// (utile in sviluppo/demo senza un provider SMTP configurato).
+return array(
+    'smtp_host'     => '',              // es. 'smtp-relay.brevo.com'
+    'smtp_port'     => 587,
+    'smtp_username' => '',
+    'smtp_password' => '',
+
+    // Mittente delle e-mail inviate dal sito: deve essere un indirizzo
+    // verificato presso il tuo provider SMTP
+    'from_email' => 'noreply@tuo-dominio.tld',
+    'from_name'  => 'AnySpace',
+
+    // Destinatario delle notifiche amministrative (nuove iscrizioni, segnalazioni)
+    'admin_email' => 'admin@tuo-dominio.tld',
+
+    // Se true, i nuovi iscritti devono verificare l'e-mail prima di poter
+    // accedere (richiede smtp_host configurato)
+    'require_verification' => 0,
+);

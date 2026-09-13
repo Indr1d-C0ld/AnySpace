@@ -1,0 +1,17 @@
+RewriteEngine On
+RewriteRule ^(core|lib)/ - [F,L]
+
+# admin/ vive a livello di progetto (fratello di public/, non dentro): va
+# lasciato passare così com'è, senza finire nella riscrittura sotto.
+RewriteRule ^admin/ - [L]
+
+# L'Alias /anyspace -> public/ a livello di vhost non viene applicato in
+# questo ambiente (il motivo esatto non è chiaro: /anyspace/public/ risponde
+# correttamente se richiesto per esteso, ma /anyspace/ da solo cade nel
+# listing della cartella di progetto invece di essere reindirizzato). Questa
+# riscrittura a livello di .htaccess ottiene lo stesso risultato in modo
+# affidabile: tutto ciò che non è già sotto /anyspace/public/ (o /anyspace/admin/)
+# viene rimappato dentro public/ internamente.
+RewriteCond %{REQUEST_URI} !^/anyspace/public/
+RewriteCond %{REQUEST_URI} !^/anyspace/admin/
+RewriteRule ^(.*)$ public/$1 [L]
