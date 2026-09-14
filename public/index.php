@@ -14,28 +14,15 @@ if (isset($_SESSION['user'])) {
     exit;
 }
 
-// Process login 
-if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action'])) {
-    if ($_POST['action'] == 'login') {
-        // Sanitize input
-        $email = filter_var($_POST['email'], FILTER_SANITIZE_EMAIL);
-        $password = $_POST['password'];
-
-
-        $stmt = $conn->prepare("SELECT id, username, password FROM users WHERE email = ?");
-        $stmt->execute(array($email));
-        $user = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        if ($user && password_verify($password, $user['password'])) {
-            $_SESSION['user'] = $user['username'];
-            $_SESSION['userId'] = $user['id'];
-            header("Location: home.php");
-            exit;
-        } else {
-            echo '<p>Le informazioni di accesso non esistono o la password è errata.</p><hr>';
-        }
-    }
-}
+// NOTA: qui esisteva una SECONDA implementazione del login, copia sbiadita di
+// quella in login.php, che saltava ogni controllo aggiunto nel frattempo:
+// niente token CSRF, niente session_regenerate_id() (session fixation),
+// nessun controllo sull'account bannato, nessun controllo sulla verifica
+// dell'e-mail e nessuna registrazione in `sessions` (quindi la sessione non
+// compariva in "Sessioni Attive" e non era revocabile). Bastava inviare il
+// form a index.php invece che a login.php per aggirare ban e verifica.
+// Il form di questa pagina ora punta a login.php: un solo percorso di
+// autenticazione, quello irrobustito.
 
 ?>
 <!DOCTYPE html>
@@ -138,7 +125,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action'])) {
                     <div class="box">
                         <!-- Login/Signup Form -->
                         <h4>Accesso / Registrazione</h4>
-                        <form action="" method="post" name="theForm" id="theForm">
+                        <form action="<?= BASE_PATH ?>/login.php" method="post" name="theForm" id="theForm">
+                            <?= csrf_field() ?>
                             <input name="client_id" type="hidden" value="web">
                             <table>
                                 <tbody>

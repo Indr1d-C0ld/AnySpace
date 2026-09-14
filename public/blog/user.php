@@ -26,20 +26,20 @@ $isUserAuthor = ($userId == $authorId);
 <div class="row profile">
     <div class="col w-30 left">
         <h1>
-            <?= $userInfo['username'] ?>
+            <?= htmlspecialchars($userInfo['username']) ?>
         </h1>
         <div class="general-about">
             <div class="profile-pic ">
-                <img class="pfp-fallback" src="../media/pfp/<?= $userInfo['pfp'] ?>" alt="profile picture"
+                <img class="pfp-fallback" src="../media/pfp/<?= htmlspecialchars($userInfo['pfp']) ?>" alt="profile picture"
                     loading="lazy">
             </div>
             <div class="details below">
                 <?php if (!empty($statusInfo['status'])): ?>
-                    <p>"<?= $statusInfo['status'] ?>"
+                    <p>"<?= htmlspecialchars($statusInfo['status']) ?>"
                     </p>
                 <?php endif; ?>
                 <?php if (!empty($statusInfo['you'])): ?>
-                    <p><?= $statusInfo['you'] ?>
+                    <p><?= htmlspecialchars($statusInfo['you']) ?>
                     </p>
                 <?php endif; ?>
                 <p class="online"><img src="../static/img/green_person.png" aria-hidden="true" alt="Online icon"
@@ -47,7 +47,7 @@ $isUserAuthor = ($userId == $authorId);
             </div>
         </div>
         <div class="mood">
-            <p><b>Umore:</b> <?= $statusInfo['mood'] ?></p><br>
+            <p><b>Umore:</b> <?= htmlspecialchars($statusInfo['mood']) ?></p><br>
             <p>
                 <b>Guarda il mio:
                     <a href="../profile.php?id=<?= $authorId ?>">Profilo</a>

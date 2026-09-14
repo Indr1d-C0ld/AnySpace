@@ -6,12 +6,30 @@ require_once("../core/site/user.php");
 
 login_check();
 
-// Page is used as a single entry point for friends actions
-$action = isset($_GET['action']) ? $_GET['action'] : '';
-$id = isset($_GET['id']) ? (int) $_GET['id'] : 0;
-
 $user = $_SESSION['user'];
-$userId = $_SESSION['userId']; 
+$userId = $_SESSION['userId'];
+
+// Questa pagina mostrava tre pulsanti in <form method="post"> ("Accetta Tutte
+// le Richieste", "Rifiuta", "Annulla Richiesta di Amicizia") ma non conteneva
+// NESSUN gestore per il POST: il form si inviava su se stesso, la pagina si
+// ricaricava identica e non succedeva niente.
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    csrf_verify();
+    $targetId = isset($_POST['target_id']) ? (int) $_POST['target_id'] : 0;
+
+    if (isset($_POST['accept_all'])) {
+        foreach (fetchFriends($conn, 'PENDING', 'receiver', $userId) as $req) {
+            acceptFriend($req['sender'], $userId);
+        }
+    } elseif (isset($_POST['accept_one']) && $targetId > 0) {
+        acceptFriend($targetId, $userId);
+    } elseif ((isset($_POST['decline']) || isset($_POST['cancel_sent'])) && $targetId > 0) {
+        revokeFriend($userId, $targetId);
+    }
+
+    header("Location: requests.php");
+    exit;
+}
 
 // Fetch pending and accepted friends
 $pendingReceived = fetchFriends($conn, 'PENDING', 'receiver', $userId);
@@ -49,10 +67,12 @@ $acceptedFriends = array_merge(
                         <p><b><span class="count">
                                     <?= count($pendingReceived); ?>
                                 </span> Richieste di Amicizia in sospeso</b></p>
+                        <?php if (!empty($pendingReceived)): ?>
                         <form method="post">
-                            <input type="hidden" name="type" value="accept_all_requests">
-                            <button type="submit" name="submit">Accetta Tutte le Richieste</button>
+                            <?= csrf_field() ?>
+                            <button type="submit" name="accept_all">Accetta Tutte le Richieste</button>
                         </form>
+                        <?php endif; ?>
                         <br>
                         <table class="comments-table" cellspacing="0" cellpadding="3" bordercolor="ffffff" border="1">
                             <tbody>
@@ -82,15 +102,10 @@ $acceptedFriends = array_merge(
                                             <td>
                                                 <p><b>Richiesta di Amicizia</b></p>
                                                 <form method="post">
-                                                    <input type="hidden" name="type" value="friend-request">
-                                                    <input type="hidden" name="request_id"
-                                                        value="<?= htmlspecialchars($request['id']); ?>">
-                                                    <button
-                                                        onclick="location.href='friends.php?action=accept&id=<?= $request['sender'] ?>'"
-                                                        name="decision" value="accept" type="button">Accetta</button>
-                                                    <button
-                                                        onclick="location.href='friends.php?action=revoke&id=<?= $request['sender'] ?>'"
-                                                        type="button" name="decision" value="decline">Rifiuta</button>
+                                                    <?= csrf_field() ?>
+                                                    <input type="hidden" name="target_id" value="<?= (int) $request['sender'] ?>">
+                                                    <button type="submit" name="accept_one">Accetta</button>
+                                                    <button type="submit" name="decline">Rifiuta</button>
                                                 </form>
                                             </td>
                                         </tr>
@@ -141,10 +156,9 @@ $acceptedFriends = array_merge(
                                             <td>
                                                 <p><b>Richiesta di Amicizia Inviata</b></p>
                                                 <form method="post">
-                                                    <input type="hidden" name="type" value="friend-request">
-                                                    <input type="hidden" name="request_id"
-                                                        value="<?= htmlspecialchars($request['id']); ?>">
-                                                    <button type="submit" name="decision" value="accept">Annulla
+                                                    <?= csrf_field() ?>
+                                                    <input type="hidden" name="target_id" value="<?= (int) $request['receiver'] ?>">
+                                                    <button type="submit" name="cancel_sent">Annulla
                                                         Richiesta di Amicizia</button>
                                                 </form>
                                             </td>

@@ -13,9 +13,24 @@ if(isset($_SESSION['userId'])) {
     $userId = null;
 }
 
-// Fetch user information
-$userInfo = fetchUserInfo($_GET['id']);
-$user = $userInfo ? $userInfo['username'] : '';
+// Profilo inesistente: prima si proseguiva comunque con $userInfo === false,
+// e ogni accesso successivo ($userInfo['id'], ['interests'], ...) emetteva un
+// warning finendo per servire una pagina profilo vuota e rotta con HTTP 200.
+$requestedId = isset($_GET['id']) ? (int) $_GET['id'] : 0;
+$userInfo = $requestedId > 0 ? fetchUserInfo($requestedId) : false;
+
+if (!$userInfo) {
+    http_response_code(404);
+    $pageTitle = 'Profilo non trovato';
+    require("header.php");
+    echo '<div class="simple-container"><h1>Profilo non trovato</h1>'
+        . '<p>Questo utente non esiste (o è stato rimosso).</p>'
+        . '<p><a href="' . BASE_PATH . '/browse.php">Esplora gli altri profili</a></p></div>';
+    require("footer.php");
+    exit;
+}
+
+$user = $userInfo['username'];
 $profileId = $userInfo['id'];
 
 $userInterests = $userInfo['interests'];
@@ -36,11 +51,43 @@ $isPendingFriend = false;
 if ($userId !== null) {
     // Check if users are friends
     $isFriend = checkFriend($userId, $profileId);
-    
+
     if (!$isFriend) {
         // If they are not friends, check for pending friend requests
         $isPendingFriend = checkFriendPending($userId, $profileId);
     }
+}
+
+// Profilo privato (Impostazioni -> Privacy): visibile solo a se stessi, agli
+// amici accettati e all'amministratore. Finora la tendina in Impostazioni
+// prometteva questo comportamento ma la colonna users.private non veniva
+// letta da nessuna parte: i profili "privati" restavano pubblici a chiunque.
+$isOwnProfile = ($userId !== null && (int) $userId === (int) $profileId);
+$isAdminViewer = ($userId !== null && (int) $userId === (int) ADMIN_USER);
+if (!empty($userInfo['private']) && !$isOwnProfile && !$isFriend && !$isAdminViewer) {
+    require("header.php");
+    ?>
+    <div class="simple-container">
+        <h1><?= htmlspecialchars($user) ?></h1>
+        <div class="box standalone">
+            <p><b>Questo profilo è privato.</b></p>
+            <p>Solo gli amici di <?= htmlspecialchars($user) ?> possono vederne il contenuto.</p>
+            <?php if ($userId === null): ?>
+                <p><a href="<?= BASE_PATH ?>/login.php">Accedi</a> se siete già amici.</p>
+            <?php elseif (!$isPendingFriend): ?>
+                <form method="post" action="<?= BASE_PATH ?>/friends.php?action=add">
+                    <?= csrf_field() ?>
+                    <input type="hidden" name="id" value="<?= (int) $profileId ?>">
+                    <button type="submit">Invia una richiesta di amicizia</button>
+                </form>
+            <?php else: ?>
+                <p><i>Hai già una richiesta di amicizia in sospeso.</i></p>
+            <?php endif; ?>
+        </div>
+    </div>
+    <?php
+    require("footer.php");
+    exit;
 }
 
 // Fetch comments
@@ -67,7 +114,7 @@ if ($userId !== null) {
 
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Profilo di <?= $user ?> | <?= SITE_NAME ?></title>
+    <title>Profilo di <?= htmlspecialchars($user) ?> | <?= SITE_NAME ?></title>
     <link rel="stylesheet" href="static/css/normalize.css">
     <link rel="stylesheet" href="static/css/base.css"> 
     <link rel="stylesheet" href="static/css/my.css">
@@ -219,11 +266,11 @@ if ($userId !== null) {
                             </div>
                             <div class="details">
                                 <?php if (!empty($statusInfo['status'])): ?>
-                                        <p>"<?= $statusInfo['status'] ?>"
+                                        <p>"<?= htmlspecialchars($statusInfo['status']) ?>"
                                         </p>
                                     <?php endif; ?>
                                     <?php if (!empty($statusInfo['you'])): ?>
-                                        <p><?= $statusInfo['you'] ?>
+                                        <p><?= htmlspecialchars($statusInfo['you']) ?>
                                         </p>
                                     <?php endif; ?>
                                     <p class="online"><img src="static/img/green_person.png" aria-hidden="true" alt="Online icon" loading="lazy">
@@ -286,11 +333,14 @@ if ($userId !== null) {
                                                 alt=""> Richiesta in sospeso
                                         </a>
                                         <?php else: ?>
-                                        <a href="friends.php?action=add&id=<?= htmlspecialchars($profileId); ?>"
-                                            rel="nofollow">
-                                            <img src="static/icons/add.png" class="icon" aria-hidden="true" loading="lazy"
-                                                alt=""> Aggiungi agli Amici
-                                        </a>
+                                        <form method="post" action="friends.php?action=add" style="display:inline;">
+                                            <?= csrf_field() ?>
+                                            <input type="hidden" name="id" value="<?= (int) $profileId ?>">
+                                            <button type="submit" class="link-button">
+                                                <img src="static/icons/add.png" class="icon" aria-hidden="true" loading="lazy"
+                                                    alt=""> Aggiungi agli Amici
+                                            </button>
+                                        </form>
                                         <?php endif; ?>
                                     </div>
                                     <div class="f-col">
@@ -451,7 +501,7 @@ if ($userId !== null) {
                     <?php if($isFriend): ?>
                     <div class="profile-info">
                         <div class="inner">
-                            <h3><?= $user ?> è tuo Amico.</h3>
+                            <h3><?= htmlspecialchars($user) ?> è tuo Amico.</h3>
                         </div>
                     </div>
                     <?php elseif ($userId == $profileId): ?>

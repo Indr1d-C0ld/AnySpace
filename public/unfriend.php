@@ -22,7 +22,7 @@ if (!$isFriend) {
 } 
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit'])) {
-    $confirmation = isset($_POST['confirmation']) ? strtoupper(trim($_POST['confirmation'])) : '';
+    csrf_verify();    $confirmation = isset($_POST['confirmation']) ? strtoupper(trim($_POST['confirmation'])) : '';
     if ($confirmation == 'ELIMINA') {
         removeFriend($userId, $friendId);
         header("Location: friends.php");
@@ -33,8 +33,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit'])) {
 <?php require("header.php"); ?>
 
 <div class="simple-container">
-    <h1>Sei sicuro/a di voler rimuovere <?= fetchName($friendId); ?> dagli amici?</h1>
+    <h1>Sei sicuro/a di voler rimuovere <?= htmlspecialchars(fetchName($friendId)); ?> dagli amici?</h1>
     <form method="POST" action="">
+        <?= csrf_field() ?>
         <p>Scrivi "ELIMINA" per rimuovere l'amico:</p>
         <input type="text" name="confirmation" required>
         <button type="submit" name="submit">Elimina</button>

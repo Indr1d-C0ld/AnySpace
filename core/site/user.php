@@ -89,8 +89,17 @@ function addFavorite($userId, $favoriteId) {
     $stmt->execute(array($userId));
     $row = $stmt->fetch(PDO::FETCH_ASSOC);
     $currentFavorites = $row ? json_decode($row['favorites'], true) : array();
+    if (!is_array($currentFavorites)) {
+        $currentFavorites = array();
+    }
 
-    $currentFavorites[] = $favoriteId;
+    // Senza questo controllo ogni invio del form accodava un duplicato: i
+    // Preferiti finivano per elencare lo stesso utente N volte.
+    $favoriteId = (string) (int) $favoriteId;
+    $currentFavorites = array_values(array_unique(array_map('strval', $currentFavorites)));
+    if (!in_array($favoriteId, $currentFavorites, true)) {
+        $currentFavorites[] = $favoriteId;
+    }
 
     $updatedFavorites = json_encode($currentFavorites);
 

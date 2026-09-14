@@ -10,27 +10,43 @@ $user = $_SESSION['user'];
 $userId = $_SESSION['userId'];
 
 // Page is used as a single entry point for friends actions
-$action = isset($_GET['action']) ? $_GET['action'] : '';
+$action = isset($_GET['action']) ? $_GET['action'] : (isset($_POST['action']) ? $_POST['action'] : '');
 $id = !empty($_GET['id']) ? (int) $_GET['id'] : $userId;
 
 
+// Le azioni che modificano lo stato erano eseguite su GET. Poiché il tag <img>
+// è ammesso nelle bio (HTMLPurifier), bastava che un utente mettesse nella
+// propria bio
+//     <img src=".../friends.php?action=remove&id=123">
+// perché chiunque aprisse quel profilo cancellasse silenziosamente una
+// propria amicizia. Ora servono POST + token CSRF.
 if (!empty($action)) {
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+        http_response_code(405);
+        exit('Questa azione richiede l\'invio di un modulo (POST).');
+    }
+    csrf_verify();
+    $targetId = isset($_POST['id']) ? (int) $_POST['id'] : 0;
+
     switch ($action) {
         case 'accept':
-            acceptFriend($id, $userId);
+            acceptFriend($targetId, $userId);
             break;
         case 'add':
-            addFriend($userId, $id);
+            addFriend($userId, $targetId);
             break;
         case 'revoke':
-            revokeFriend($userId, $id);
+            revokeFriend($userId, $targetId);
             break;
         case 'remove':
-            removeFriend($userId, $id);
+            removeFriend($userId, $targetId);
             break;
         default:
             exit('Azione non valida.');
     }
+
+    header("Location: " . BASE_PATH . "/friends.php?id=" . (int) $userId);
+    exit;
 }
 
 

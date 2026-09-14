@@ -28,34 +28,77 @@ if (isset($_POST['revoke_session'])) {
     exit;
 }
 
-if (isset($_POST['password-old']) && isset($_POST['password-new']) && isset($_POST['password-confirm'])) {
-    $oldPassword = $_POST['password-old'];
-    $newPassword = $_POST['password-new'];
-    $confirmPassword = $_POST['password-confirm'];
+// Messaggi mostrati dentro il layout (prima venivano stampati con echo PRIMA
+// di header.php, quindi comparivano sopra la pagina, fuori dal tema).
+$settingsMessages = array();
 
-    $currentUserPassword = fetchUserPassword($userId); 
-    $currentUserPassword = $currentUserPassword['password']; 
-
-    if (password_verify($oldPassword, $currentUserPassword)) {
-        if ($newPassword === $confirmPassword) {
-            $hashedPassword = password_hash($newPassword, PASSWORD_DEFAULT);
-
-            changePassword($userId, $hashedPassword); 
-
-            echo "Password aggiornata con successo.";
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit'])) {
+    // --- E-mail -----------------------------------------------------------
+    // Il campo esisteva nel form fin dall'inizio ma NESSUNO lo leggeva: si
+    // poteva modificare l'indirizzo, premere "Salva Tutto" e ritrovarsi il
+    // vecchio valore senza il minimo avviso.
+    $newEmail = trim((string) ($_POST['email'] ?? ''));
+    $currentEmail = fetchEmail($userId);
+    if ($newEmail !== '' && $newEmail !== $currentEmail) {
+        if (!filter_var($newEmail, FILTER_VALIDATE_EMAIL)) {
+            $settingsMessages[] = "L'indirizzo e-mail non è valido.";
         } else {
-            echo "Le nuove password non coincidono.";
+            $dup = $conn->prepare("SELECT id FROM users WHERE email = ? AND id <> ?");
+            $dup->execute(array($newEmail, $userId));
+            if ($dup->fetch()) {
+                $settingsMessages[] = "Questo indirizzo e-mail è già associato a un altro account.";
+            } else {
+                $stmt = $conn->prepare("UPDATE users SET email = ? WHERE id = ?");
+                $stmt->execute(array($newEmail, $userId));
+                $settingsMessages[] = "Indirizzo e-mail aggiornato.";
+            }
         }
+    }
+
+    // --- Visibilità del profilo -------------------------------------------
+    // Idem: la tendina prometteva "solo gli Amici possono vederne il
+    // contenuto" ma il valore non veniva mai salvato e la colonna
+    // users.private non era letta da nessuna parte del sito.
+    $visibility = ($_POST['profile_visibility'] ?? 'public') === 'private' ? 1 : 0;
+    $stmt = $conn->prepare("UPDATE users SET private = ? WHERE id = ?");
+    $stmt->execute(array($visibility, $userId));
+}
+
+if (!empty($_POST['password-old']) || !empty($_POST['password-new']) || !empty($_POST['password-confirm'])) {
+    $oldPassword = (string) ($_POST['password-old'] ?? '');
+    $newPassword = (string) ($_POST['password-new'] ?? '');
+    $confirmPassword = (string) ($_POST['password-confirm'] ?? '');
+
+    $currentUserPassword = fetchUserPassword($userId);
+    $currentUserPassword = $currentUserPassword['password'];
+
+    if (!password_verify($oldPassword, $currentUserPassword)) {
+        $settingsMessages[] = "La vecchia password non è corretta.";
+    } elseif ($newPassword !== $confirmPassword) {
+        $settingsMessages[] = "Le nuove password non coincidono.";
+    } elseif (strlen($newPassword) < 8) {
+        $settingsMessages[] = "La nuova password deve avere almeno 8 caratteri.";
     } else {
-        echo "La vecchia password non è corretta.";
+        changePassword($userId, password_hash($newPassword, PASSWORD_DEFAULT));
+
+        // Si cambia password soprattutto quando si teme che qualcun altro sia
+        // entrato: senza questa revoca le SUE sessioni restavano valide, cioè
+        // esattamente ciò da cui ci si stava difendendo.
+        revokeOtherSessions($userId, session_id());
+        $settingsMessages[] = "Password aggiornata. Tutte le altre sessioni sono state terminate.";
     }
 }
+
+$currentPrivate = (int) ($conn->query("SELECT private FROM users WHERE id = " . (int) $userId)->fetchColumn());
 
 ?>
 <?php require("header.php"); ?>
 
 <div class="simple-container">
   <h1>Impostazioni Account</h1>
+    <?php foreach ($settingsMessages as $m): ?>
+      <p class="settings-notice"><b><?= htmlspecialchars($m) ?></b></p>
+    <?php endforeach; ?>
     <form method="post" class="ctrl-enter-submit">
     <?= csrf_field() ?>
     <div class="setting-section">
@@ -128,8 +171,8 @@ if (isset($_POST['password-old']) && isset($_POST['password-new']) && isset($_PO
           -->
         <label for="profile_visibility">Chi può vedere il tuo Profilo:</label>
         <select name="profile_visibility" id="profile_visibility" required>
-          <option value="public" selected>Tutti (Pubblico)</option>
-          <option value="private" >Solo Amici (Privato)</option>
+          <option value="public" <?= $currentPrivate ? '' : 'selected' ?>>Tutti (Pubblico)</option>
+          <option value="private" <?= $currentPrivate ? 'selected' : '' ?>>Solo Amici (Privato)</option>
         </select>
         <p class="info">Se il tuo Profilo è impostato come <b>privato</b>, solo gli Amici possono vederne il contenuto. Tutti gli altri contenuti che pubblichi resteranno pubblici.</p>
 

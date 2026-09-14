@@ -3734,3 +3734,22 @@ audio {
 .main-header a:visited {
     color: #ffffff;
 }
+
+/* Bottone che deve apparire come un link: usato dove un'azione che modifica
+   dati (es. "Aggiungi agli Amici") è stata convertita da <a href> a <form
+   method="post">, per non cambiare l'aspetto del contact box del profilo. */
+.link-button {
+    background: none;
+    border: none;
+    padding: 0;
+    margin: 0;
+    font: inherit;
+    color: #003399;
+    color: var(--darker-blue);
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.link-button:hover {
+    text-decoration: underline;
+}

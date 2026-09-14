@@ -261,16 +261,11 @@ $bulletins = fetchAllFriendBulletins($userId, 5);
                                             </td>
                                             <td>
                                                 <p><b>Richiesta di Amicizia</b></p>
-                                                <form method="post">
-                                                    <input type="hidden" name="type" value="friend-request">
-                                                    <input type="hidden" name="request_id"
-                                                        value="<?= htmlspecialchars($request['id']) ?>">
-                                                    <button
-                                                        onclick="location.href='friends.php?action=accept&id=<?= $request['sender'] ?>'"
-                                                        name="decision" value="accept" type="button">Accetta</button>
-                                                    <button
-                                                        onclick="location.href='friends.php?action=revoke&id=<?= $request['sender'] ?>'"
-                                                        type="button" name="decision" value="decline">Rifiuta</button>
+                                                <form method="post" action="requests.php">
+                                                    <?= csrf_field() ?>
+                                                    <input type="hidden" name="target_id" value="<?= (int) $request['sender'] ?>">
+                                                    <button type="submit" name="accept_one">Accetta</button>
+                                                    <button type="submit" name="decline">Rifiuta</button>
                                                 </form>
                                             </td>
                                         </tr>

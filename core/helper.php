@@ -14,7 +14,30 @@ function login_check() {
         exit;
     }
 
+    // Il ban veniva controllato SOLO al login: un utente già collegato restava
+    // pienamente operativo finché non scadeva la sessione, quindi "Banna
+    // Utente" non aveva alcun effetto su chi era online in quel momento —
+    // proprio il caso in cui serve.
+    if (isUserBanned($_SESSION['userId'] ?? 0)) {
+        $_SESSION = array();
+        session_destroy();
+        header("Location: " . BASE_PATH . "/login.php");
+        exit;
+    }
+
     touchSessionActivity();
+}
+
+/** True se l'account risulta sospeso. */
+function isUserBanned($userId) {
+    global $conn;
+    if (!$userId) {
+        return false;
+    }
+    $stmt = $conn->prepare("SELECT is_banned FROM users WHERE id = ?");
+    $stmt->execute(array($userId));
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+    return $row && !empty($row['is_banned']);
 }
 
 // Va chiamata da OGNI pagina sotto admin/ (tranne login.php/logout.php).

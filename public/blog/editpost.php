@@ -18,7 +18,7 @@ if (!$isUserAuthor) {
   header("Location: entry.php?id=" . $blogEntry['id']);
 } else {
   if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit'])) {
-    $commentId = $_GET['id'];
+      csrf_verify();    $commentId = $_GET['id'];
     updateBlogEntry($commentId, $userId, $_POST);
     header("Location: entry.php?id=" . $commentId);
   }
@@ -70,6 +70,7 @@ if (!$isUserAuthor) {
           <br>
 
           <form method="post" class="ctrl-enter-submit">
+              <?= csrf_field() ?>
             <label for="subject">Oggetto:</label>
             <input type="text" id="subject" name="subject" autocomplete="off" value="<?= $blogEntry['title'] ?>"
               required>

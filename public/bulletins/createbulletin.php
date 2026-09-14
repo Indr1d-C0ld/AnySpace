@@ -9,7 +9,7 @@ $user = $_SESSION['user'];
 $userId = $_SESSION['userId'];
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit'])) {
-    createBulletin($userId, $_POST);
+    csrf_verify();    createBulletin($userId, $_POST);
 }
 
 ?>
@@ -51,6 +51,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit'])) {
     <br>
 
     <form method="post" class="ctrl-enter-submit">
+        <?= csrf_field() ?>
       <label for="subject">Oggetto:</label>
       <input type="text" id="subject" name="subject" autocomplete="off" value="" required>
 

@@ -27,7 +27,7 @@ if (!$isUserAuthor) {
     exit;
 } else { 
     if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit'])) {
-        $confirmation = isset($_POST['confirmation']) ? strtoupper(trim($_POST['confirmation'])) : '';
+        csrf_verify();        $confirmation = isset($_POST['confirmation']) ? strtoupper(trim($_POST['confirmation'])) : '';
         if ($confirmation == 'ELIMINA') {
             deleteBlogComment($commentId, $userId);
             header("Location: comments.php?id=" . $comment['toid'] );
@@ -41,6 +41,7 @@ if (!$isUserAuthor) {
 <div class="simple-container">
     <h1>Conferma Eliminazione</h1>
     <form method="POST" action="">
+        <?= csrf_field() ?>
         <p>Scrivi "ELIMINA" per confermare l'eliminazione del commento:</p>
         <input type="text" name="confirmation" required>
         <button type="submit" name="submit">Elimina</button>

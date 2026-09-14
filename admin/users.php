@@ -98,13 +98,13 @@ th, td {
           </td>
          <!-- Username -->
           <td>
-            <a href="../public/profile.php?id=<?= $userId ?>">
-            <?= $username ?>
+            <a href="../public/profile.php?id=<?= (int) $userId ?>">
+            <?= htmlspecialchars($username) ?>
       </a>
           </td>
          <!-- Email -->
           <td>
-              <p><?= $email ?><p>
+              <p><?= htmlspecialchars($email) ?></p>
           </td>
          <!--Date Created -->
          <td class="time-col">

@@ -63,7 +63,7 @@ $blogEntries = fetchBlogEntriesByCategory($categoryId);
           <div class="entry">
              <p class="publish-date">
               <time class="ago"><?= time_elapsed_string($entry['date']) ?></time>
-              &mdash; di <a href="user.php?id=<?= $entry['author'] ?>"><?= fetchName($entry['author']) ?></a>
+              &mdash; di <a href="user.php?id=<?= $entry['author'] ?>"><?= htmlspecialchars(fetchName($entry['author'])) ?></a>
               &mdash; <a href="comments.php?id=<?= $entry['id'] ?>"><?= $countTotalComments ?> Commenti</a><!--&mdash; 0 Kudos -->           </p>
             <div class="inner">
               <h3 class="title">

@@ -10,7 +10,7 @@ $toid = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 $parentId = isset($_GET['reply']) ? $_GET['reply'] : null; 
 
 if (isset($_SESSION['user'], $_POST['submit'], $_POST['comment']) && !empty($_POST['comment'])) {
-    $authorId = $_SESSION['userId']; 
+    csrf_verify();    $authorId = $_SESSION['userId']; 
     $commentText = trim($_POST['comment']);
 
     if (addComment($toid, $authorId, $commentText, $parentId)) {
@@ -33,6 +33,7 @@ if (isset($_SESSION['user'], $_POST['submit'], $_POST['comment']) && !empty($_PO
     <h2>Aggiungi Commento</h2>
     <p>Sii gentile.</p>
         <form method="post" class="ctrl-enter-submit">
+            <?= csrf_field() ?>
       <label for="comment"><h4>Il tuo Commento:</h4></label>
       <textarea class="big_textarea" id="comment" name="comment" required autofocus></textarea>
       <button type="submit" name="submit">Aggiungi Commento</button>

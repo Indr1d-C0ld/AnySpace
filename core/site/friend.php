@@ -28,23 +28,46 @@ function addFriend($senderId, $receiverId) {
     header("Location: requests.php");
 }
 
+/**
+ * Accetta la richiesta inviata da $senderId a $receiverId. Il redirect NON è
+ * più qui dentro: una funzione di dominio che emette header() non è
+ * richiamabile in un ciclo (es. "Accetta tutte le richieste") e rendeva
+ * impossibile riusarla. Il redirect lo fa ora la pagina chiamante.
+ */
 function acceptFriend($senderId, $receiverId) {
     global $conn;
     $stmt = $conn->prepare("UPDATE friends SET status = 'ACCEPTED' WHERE sender = :senderId AND receiver = :receiverId AND status = 'PENDING'");
-    $stmt->execute(array(':senderId' => $senderId, ':receiverId' => $receiverId));
-
-    header("Location: requests.php");
+    return $stmt->execute(array(':senderId' => $senderId, ':receiverId' => $receiverId));
 }
 
+/**
+ * Rifiuta/annulla una richiesta in sospeso fra due utenti, in QUALUNQUE
+ * direzione sia stata inviata. Prima cancellava solo la direzione
+ * "senderId -> receiverId": il pulsante "Rifiuta" in Richieste passa l'id di
+ * chi ha inviato la richiesta, ma la riga da cancellare ha quell'utente come
+ * `sender` e non come `receiver`, quindi non corrispondeva mai nulla e
+ * rifiutare una richiesta non aveva alcun effetto.
+ */
 function revokeFriend($senderId, $receiverId) {
     global $conn;
-    $stmt = $conn->prepare("DELETE FROM friends WHERE sender = :senderId AND receiver = :receiverId AND status = 'PENDING'");
-    $stmt->execute(array(':senderId' => $senderId, ':receiverId' => $receiverId));
+    $stmt = $conn->prepare(
+        "DELETE FROM friends WHERE ((sender = :senderId AND receiver = :receiverId) "
+        . "OR (sender = :receiverId AND receiver = :senderId)) AND status = 'PENDING'"
+    );
+    return $stmt->execute(array(':senderId' => $senderId, ':receiverId' => $receiverId));
 }
 
 function removeFriend($senderId, $receiverId) {
     global $conn;
-    $stmt = $conn->prepare("DELETE FROM friends WHERE (sender = :senderId AND receiver = :receiverId) OR (sender = :receiverId AND receiver = :senderId) AND status = 'ACCEPTED'");
+    // In SQL AND lega più forte di OR: senza le parentesi esterne la
+    // condizione veniva letta come
+    //   (sender=A AND receiver=B) OR (sender=B AND receiver=A AND status='ACCEPTED')
+    // cioè il filtro sullo stato valeva per UNA sola delle due direzioni, e
+    // nell'altra si cancellava anche una richiesta ancora in sospeso.
+    $stmt = $conn->prepare(
+        "DELETE FROM friends WHERE ((sender = :senderId AND receiver = :receiverId) "
+        . "OR (sender = :receiverId AND receiver = :senderId)) AND status = 'ACCEPTED'"
+    );
     $stmt->execute(array(':senderId' => $senderId, ':receiverId' => $receiverId));
 }
 
