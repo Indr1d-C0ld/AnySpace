@@ -52,6 +52,7 @@ Non è un clone 1:1 né usa alcun codice, testo o materiale originale di MySpace
 
 **Account e sicurezza**
 - Registrazione con verifica e-mail e reset password via e-mail
+- **Iscrizione su invito** (facoltativa): l'amministratore genera codici monouso, con promemoria e scadenza, e li distribuisce come indirizzi già pronti. Pensata per aprire la propria istanza solo alle persone che si conoscono, lasciando fuori il resto di internet
 - Gestione sessioni multiple: vedi da quali dispositivi sei connesso, termina una sessione specifica o tutte le altre
 - Pannello amministrazione: utenti (promuovi/banna/reimposta password), segnalazioni, bacheche forum, impostazioni generali del sito
 

@@ -30,6 +30,11 @@ return array(
     // ID utente (colonna users.id) che ha accesso al pannello /admin/
     'adminUser' => 1,
 
+    // Registrazione su invito: se true, per iscriversi serve un codice
+    // generato dall'amministratore in /admin/invites.php. Si può cambiare
+    // anche da quella pagina, senza toccare questo file.
+    'requireInvite' => false,
+
     // Mostra i dettagli degli errori invece della pagina generica: SOLO
     // in sviluppo, mai in produzione
     'debug' => false,

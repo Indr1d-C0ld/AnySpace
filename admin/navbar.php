@@ -53,6 +53,7 @@
         'Blog' => 'blog/',
         'Bulletins' => 'bulletins/',
         'Forum' => 'forum.php',
+        'Inviti' => 'invites.php',
         'Groups' => '#',
         'Layouts' => '#',
         */
@@ -62,6 +63,7 @@
         // scopo. 'Forum' invece esisteva ed era funzionante, ma non era in
         // elenco: la gestione delle bacheche era raggiungibile solo a mano.
         'Forum' => 'forum.php',
+        'Inviti' => 'invites.php',
         'Email' => 'email.php',
         'Database' => 'database.php',
         'Sorgente' => 'https://github.com/superswan/anyspace',

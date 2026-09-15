@@ -24,7 +24,19 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         // delle password: nessuna validazione vera dell'indirizzo
         // (FILTER_SANITIZE_EMAIL ripulisce ma non valida) e nessuna lunghezza
         // minima per la password.
-        if ($_POST['password'] !== $_POST['confirm']) {
+        // Invito: controllato PRIMA di tutto il resto quando la modalità è
+        // attiva, così chi non ce l'ha non arriva nemmeno a occupare un nome
+        // utente. Il codice viene solo verificato qui: l'assegnazione vera
+        // avviene dopo la creazione dell'account, con un UPDATE condizionato.
+        $inviteCode = isset($_POST['invite']) ? invite_normalize($_POST['invite']) : '';
+        $inviteProblem = '';
+        if (invite_required()) {
+            $inviteProblem = invite_problem(invite_lookup($inviteCode));
+        }
+
+        if ($inviteProblem !== '') {
+            $message = "<small>" . htmlspecialchars($inviteProblem) . "</small>";
+        } elseif ($_POST['password'] !== $_POST['confirm']) {
             $message = "<small>Le password non coincidono.</small>";
         } elseif (mb_strlen($username) > 21) {
             $message = "<small>Il nome utente non può superare i 21 caratteri.</small>";
@@ -80,6 +92,20 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             if ($emailcheck) {
                 $newUserId = $conn->lastInsertId();
 
+                // Assegnazione dell'invito: l'UPDATE è condizionato allo stato
+                // "ancora libero", quindi due registrazioni simultanee con lo
+                // stesso codice non possono riuscire entrambe. Se il codice è
+                // stato speso da qualcun altro fra la verifica e questo punto,
+                // l'account appena creato viene ritirato invece di lasciar
+                // entrare qualcuno senza invito valido.
+                if (invite_required() && !invite_claim($inviteCode, $newUserId)) {
+                    $conn->prepare("DELETE FROM users WHERE id = ?")->execute(array($newUserId));
+                    $message = "<small>Questo invito è appena stato utilizzato da qualcun altro. Chiedi un nuovo codice.</small>";
+                    $emailcheck = false;
+                }
+            }
+
+            if ($emailcheck) {
                 rate_limit_hit('register', $ipKey, 5, 3600, 3600);
                 autoAddFriend($newUserId);
 
@@ -139,10 +165,27 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 <?php else: ?>
                 <form action="" method="post">
                     <?= csrf_field() ?>
-                    <input required placeholder="Nome utente" type="text" name="username"><br>
-                    <input required placeholder="E-Mail" type="email" name="email"><br>
-                    <input required placeholder="Password" type="password" name="password"><br>
-                    <input required placeholder="Conferma Password" type="password" name="confirm"><br><br>
+                    <?php if (invite_required()): ?>
+                        <?php
+                        // Il codice può arrivare dal link dell'invito
+                        // (register.php?invite=...), così l'invitato non deve
+                        // trascriverlo a mano.
+                        $prefill = isset($_POST['invite']) ? $_POST['invite']
+                            : (isset($_GET['invite']) ? $_GET['invite'] : '');
+                        ?>
+                        <p><small>L'iscrizione a <?= htmlspecialchars(SITE_NAME) ?> è su invito.</small></p>
+                        <input required placeholder="Codice di invito" type="text" name="invite"
+                               value="<?= htmlspecialchars($prefill) ?>" autocapitalize="characters"
+                               spellcheck="false"><br>
+                    <?php endif; ?>
+                    <input required placeholder="Nome utente" type="text" name="username"
+                           maxlength="21" value="<?= isset($_POST['username']) ? htmlspecialchars($_POST['username']) : '' ?>"><br>
+                    <input required placeholder="E-Mail" type="email" name="email"
+                           value="<?= isset($_POST['email']) ? htmlspecialchars($_POST['email']) : '' ?>"><br>
+                    <input required placeholder="Password (almeno 8 caratteri)" type="password" name="password"
+                           minlength="8" autocomplete="new-password"><br>
+                    <input required placeholder="Conferma Password" type="password" name="confirm"
+                           minlength="8" autocomplete="new-password"><br><br>
                     <input type="submit" value="Registrati">
                 </form>
                 <?php endif; ?>

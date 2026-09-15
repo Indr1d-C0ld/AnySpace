@@ -30,6 +30,11 @@ define("DOMAIN_NAME", $domainName);
 define("ADMIN_USER", $adminUser);
 // Percorso base per l'hosting in sottocartella (es. "/anyspace"). Stringa vuota se in root.
 define("BASE_PATH", isset($basePath) ? rtrim($basePath, '/') : '');
+// Registrazione su invito: se true, per iscriversi serve un codice generato
+// dall'amministratore (vedi admin/invites.php). Assente dalle installazioni
+// precedenti, quindi il default è "aperta" e nulla cambia senza una scelta
+// esplicita.
+define("REQUIRE_INVITE", isset($requireInvite) ? (bool) $requireInvite : false);
 
 // Set TimeZone (Time elapse will not display right if this doesn't match server)
 date_default_timezone_set('UTC');
@@ -40,3 +45,4 @@ include("security.php");
 include("site/session.php");
 include("ratelimit.php");
 include("pagination.php");
+include("site/invite.php");

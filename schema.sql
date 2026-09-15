@@ -239,3 +239,21 @@ CREATE TABLE IF NOT EXISTS `rate_limits` (
   UNIQUE KEY `uk_rate_limits` (`bucket`,`identifier`),
   KEY `ix_rate_limits_first` (`first_attempt`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Inviti alla registrazione (admin/invites.php). Come rate_limits, la tabella
+-- viene creata automaticamente al primo utilizzo da core/site/invite.php:
+-- è qui per completezza dello schema.
+CREATE TABLE IF NOT EXISTS `invites` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `code` varchar(32) NOT NULL,
+  `created_by` int(11) NOT NULL,
+  `created_at` datetime NOT NULL,
+  `note` varchar(255) NOT NULL DEFAULT '',
+  `expires_at` datetime NULL DEFAULT NULL,
+  `used_by` int(11) NULL DEFAULT NULL,
+  `used_at` datetime NULL DEFAULT NULL,
+  `revoked` tinyint(1) NOT NULL DEFAULT 0,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_invites_code` (`code`),
+  KEY `ix_invites_used_by` (`used_by`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
