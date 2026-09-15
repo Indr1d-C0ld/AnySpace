@@ -23,7 +23,8 @@ if (!checkFriend($userId, $authorId)) {
     }
 }
 
-$bulletins = fetchBulletinByAuthor($authorId, $limit = null);
+$pager = paginate(countBulletinByAuthor($authorId));
+$bulletins = fetchBulletinByAuthor($authorId, $pager['per_page'], $pager['offset']);
 $userInfo = fetchUserInfo($authorId);
 $statusInfo = fetchUserStatus($authorId);
 $isUserAuthor = ($userId == $authorId);
@@ -52,8 +53,10 @@ $isUserAuthor = ($userId == $authorId);
                     <p><?= htmlspecialchars($statusInfo['you']) ?>
                     </p>
                 <?php endif; ?>
+<?php if (isUserOnline($userInfo['lastactive'])): ?>
                 <p class="online"><img src="../static/img/green_person.png" aria-hidden="true" alt="Online icon"
                         loading="lazy"> IN LINEA!</p>
+                <?php endif; ?>
             </div>
         </div>
         <div class="mood">
@@ -115,9 +118,7 @@ $isUserAuthor = ($userId == $authorId);
                   </tbody>
       </table>
            
-            <div class="pagination">
-                <!-- Pagination logic here -->
-            </div>
+                <?= pagination_links($pager) ?>
                 <?php endif; ?>
         </div>
     </div>

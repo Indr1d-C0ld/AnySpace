@@ -7,7 +7,9 @@ require_once("../../core/site/comment.php");
 
 $categoryId = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 
-$blogEntries = fetchBlogEntriesByCategory($categoryId, null, isset($_SESSION["userId"]) ? $_SESSION["userId"] : 0);
+$viewerId = isset($_SESSION["userId"]) ? $_SESSION["userId"] : 0;
+$pager = paginate(countBlogEntriesByCategory($categoryId, $viewerId));
+$blogEntries = fetchBlogEntriesByCategory($categoryId, $pager['per_page'], $viewerId, $pager['offset']);
 
   ?>
 <?php require("blog-header.php"); ?>
@@ -36,7 +38,7 @@ $blogEntries = fetchBlogEntriesByCategory($categoryId, null, isset($_SESSION["us
         <li><a href="category.php?id=4">Finanza</a></li>
         <li><a href="category.php?id=5">Cibo</a></li>
         <li><a href="category.php?id=6">Giochi</a></li>
-        <li><a href="category.php?id=777">Vita</a></li>
+        <li><a href="category.php?id=7">Vita</a></li>
         <li><a href="category.php?id=8">Letteratura</a></li>
         <li><a href="category.php?id=9">Scienza</a></li>
         <li><a href="category.php?id=10">Film e TV</a></li>
@@ -90,13 +92,7 @@ $blogEntries = fetchBlogEntriesByCategory($categoryId, null, isset($_SESSION["us
         <?php endif; ?>
       </div>
     </div>
-    <div class="pagination">
-      <a class="next" rel="next" href="/?page=2">
-        <button>
-          Pagina Successiva
-        </button>
-      </a>
-    </div>
+    <?= pagination_links($pager) ?>
   </div>
 </div>
 

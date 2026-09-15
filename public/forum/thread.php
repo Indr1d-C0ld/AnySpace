@@ -20,7 +20,10 @@ $board = fetchBoard($thread['board_id']);
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit']) && !$thread['locked']) {
     csrf_verify();
     createPost($threadId, $userId, $_POST['content'] ?? '');
-    header("Location: thread.php?id=$threadId#bottom");
+    // I messaggi sono in ordine cronologico: con la paginazione la propria
+    // risposta finisce sull'ULTIMA pagina, non sulla prima.
+    $lastPage = max(1, (int) ceil(countPostsByThread($threadId) / ANYSPACE_PER_PAGE));
+    header("Location: thread.php?id=$threadId&p=$lastPage#bottom");
     exit;
 } elseif ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['delete_post'])) {
     csrf_verify();
@@ -29,7 +32,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit']) && !$thread[
     exit;
 }
 
-$posts = fetchPostsByThread($threadId);
+$pager = paginate(countPostsByThread($threadId));
+$posts = fetchPostsByThread($threadId, $pager['per_page'], $pager['offset']);
 ?>
 <?php require("forum-header.php"); ?>
 
@@ -53,6 +57,8 @@ $posts = fetchPostsByThread($threadId);
             <?php endif; ?>
         </div>
     <?php endforeach; ?>
+
+    <?= pagination_links($pager) ?>
 
     <a name="bottom"></a>
     <?php if ($thread['locked']): ?>

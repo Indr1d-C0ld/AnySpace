@@ -15,7 +15,9 @@ if (!isset($_GET['id'])) {
 
 $userId = $_SESSION['userId'];
 
-$blogEntries = fetchBlogEntries($authorId, null, isset($_SESSION["userId"]) ? $_SESSION["userId"] : 0);
+$viewerId = isset($_SESSION["userId"]) ? $_SESSION["userId"] : 0;
+$pager = paginate(countBlogEntries($authorId, $viewerId));
+$blogEntries = fetchBlogEntries($authorId, $pager['per_page'], $viewerId, $pager['offset']);
 $userInfo = fetchUserInfo($authorId);
 $statusInfo = fetchUserStatus($authorId);
 $isUserAuthor = ($userId == $authorId);
@@ -42,8 +44,10 @@ $isUserAuthor = ($userId == $authorId);
                     <p><?= htmlspecialchars($statusInfo['you']) ?>
                     </p>
                 <?php endif; ?>
+<?php if (isUserOnline($userInfo['lastactive'])): ?>
                 <p class="online"><img src="../static/img/green_person.png" aria-hidden="true" alt="Online icon"
                         loading="lazy"> IN LINEA!</p>
+                <?php endif; ?>
             </div>
         </div>
         <div class="mood">
@@ -117,9 +121,7 @@ $isUserAuthor = ($userId == $authorId);
                     <p>Nessun post trovato.</p>
                 <?php endif; ?>
             </div>
-            <div class="pagination">
-                <!-- Pagination logic here -->
-            </div>
+            <?= pagination_links($pager) ?>
         </div>
     </div>
 

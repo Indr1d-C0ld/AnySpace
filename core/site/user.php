@@ -1,10 +1,23 @@
 <?php
-function fetchUsers()
+function fetchUsers($limit = null, $offset = 0)
 {
     global $conn;
-    $stmt = $conn->prepare("SELECT * FROM `users`");
+    $sql = "SELECT * FROM `users` ORDER BY id ASC";
+    if ($limit !== null) {
+        $sql .= " LIMIT :limit OFFSET :offset";
+    }
+    $stmt = $conn->prepare($sql);
+    if ($limit !== null) {
+        $stmt->bindValue(':limit', (int) $limit, PDO::PARAM_INT);
+        $stmt->bindValue(':offset', (int) $offset, PDO::PARAM_INT);
+    }
     $stmt->execute();
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
+function countUsers() {
+    global $conn;
+    return (int) $conn->query("SELECT COUNT(*) FROM `users`")->fetchColumn();
 }
 
 function fetchUserInfo($userId)
@@ -143,13 +156,34 @@ function incrementProfileViews($userId) {
     $stmt->execute(array($userId));
 }
 
+/** Minuti di inattività oltre i quali un utente non è più considerato in linea. */
+define('ANYSPACE_ONLINE_MINUTES', 5);
+
+/**
+ * True se l'utente risulta attivo di recente. Serviva: il riquadro
+ * "IN LINEA!" era stampato incondizionatamente su ogni profilo, quindi
+ * chiunque risultava sempre collegato, e il filtro "online" di browse.php
+ * interrogava una colonna `online_status` che non esiste nello schema
+ * (eccezione PDO non gestita, pagina troncata a metà).
+ */
+function isUserOnline($lastActive) {
+    if (empty($lastActive)) {
+        return false;
+    }
+    $ts = strtotime($lastActive);
+    return $ts !== false && (time() - $ts) <= ANYSPACE_ONLINE_MINUTES * 60;
+}
+
 // Should probably get moved, no idea where to put it though
-function printPerson($userId) {
-    $username = fetchName($userId);
-    $profilePicPath = fetchPFP($userId);
+// $row opzionale: se il chiamante ha già la riga dell'utente (es. browse.php,
+// che fa una sola SELECT per l'intero elenco) si evitano due query in più
+// per persona solo per rileggere nome e foto.
+function printPerson($userId, $row = null) {
+    $username = ($row && isset($row['username'])) ? $row['username'] : fetchName($userId);
+    $profilePicPath = ($row && isset($row['pfp'])) ? $row['pfp'] : fetchPFP($userId);
 
     $profilePicPath = htmlspecialchars('media/pfp/' . $profilePicPath);
-    $profileLink = 'profile.php?id=' . $userId;
+    $profileLink = 'profile.php?id=' . (int) $userId;
     $username = htmlspecialchars($username);
 
     echo "<div class='person'>";

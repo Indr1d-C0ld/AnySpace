@@ -7,7 +7,8 @@ require_once("../core/site/message.php");
 login_check();
 
 $userId = $_SESSION['userId'];
-$conversations = fetchInbox($userId);
+$pager = paginate(countInbox($userId));
+$conversations = fetchInbox($userId, $pager['per_page'], $pager['offset']);
 ?>
 <?php require("header.php"); ?>
 
@@ -44,6 +45,7 @@ $conversations = fetchInbox($userId);
                 <?php endforeach; ?>
             </tbody>
         </table>
+        <?= pagination_links($pager) ?>
     <?php endif; ?>
 </div>
 

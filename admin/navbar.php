@@ -57,7 +57,11 @@
         'Layouts' => '#',
         */
         'Blog' => 'blog.php',
-        'Preferiti' => 'favorites.php',
+        // 'Preferiti' rimandava a una pagina vuota e non aveva un contenuto
+        // sensato dal lato amministrazione: rimossa invece di inventarle uno
+        // scopo. 'Forum' invece esisteva ed era funzionante, ma non era in
+        // elenco: la gestione delle bacheche era raggiungibile solo a mano.
+        'Forum' => 'forum.php',
         'Email' => 'email.php',
         'Database' => 'database.php',
         'Sorgente' => 'https://github.com/superswan/anyspace',

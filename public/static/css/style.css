@@ -3753,3 +3753,52 @@ audio {
 .link-button:hover {
     text-decoration: underline;
 }
+
+/* Paginazione condivisa (core/pagination.php). */
+.pagination {
+    margin: 12px 0;
+    padding: 6px 0;
+    text-align: center;
+    font-size: 0.9em;
+}
+
+.pagination a,
+.pagination .pg-current,
+.pagination .pg-disabled {
+    display: inline-block;
+    padding: 2px 7px;
+    margin: 0 1px;
+    border: 1px solid #6699CC;
+    border: 1px solid var(--lighter-blue);
+    text-decoration: none;
+}
+
+.pagination .pg-current {
+    background: #003399;
+    background: var(--darker-blue);
+    color: #ffffff;
+    font-weight: bold;
+}
+
+.pagination .pg-disabled {
+    color: #919191;
+    color: var(--dark-gray);
+    border-color: #e3e3e3;
+    border-color: var(--gray);
+}
+
+.pagination .pg-gap {
+    border: none;
+    padding: 0 2px;
+}
+
+.pagination .pg-info {
+    margin-top: 6px;
+    font-size: 0.85em;
+    color: #545454;
+    color: var(--darker-gray);
+}
+
+/* Esiti dei controlli di integrità in admin/database.php */
+.db-ok { color: #2E9E4F; color: var(--green); }
+.db-warn { color: #CC0000; }

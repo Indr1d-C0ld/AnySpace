@@ -70,24 +70,40 @@ function isFilterActive($filter, $friends = null) {
         </div>
         <div class="inner">
             <?php
-            if ($view === 'new') {
-                $query = "SELECT id, username, pfp FROM `users` ORDER BY id DESC";
-            } else if ($view === 'online') { 
-                $query = "SELECT id, username, pfp FROM `users` WHERE online_status = 'Online'";
-            } else {
-                $query = "SELECT id, username, pfp FROM `users`";
+            // Il filtro "online" interrogava una colonna `online_status` che
+            // non esiste nello schema: l'eccezione PDO non gestita troncava la
+            // pagina a meta'. Lo stato si ricava da users.lastactive, che il
+            // sito aggiorna gia' a ogni richiesta.
+            $where = '';
+            $order = ' ORDER BY id DESC';
+            if ($view === 'online') {
+                $where = ' WHERE lastactive IS NOT NULL AND lastactive >= DATE_SUB(NOW(), INTERVAL '
+                    . (int) ANYSPACE_ONLINE_MINUTES . ' MINUTE)';
+                $order = ' ORDER BY lastactive DESC';
             }
 
-            $stmt = $conn->prepare($query);
+            $total = (int) $conn->query("SELECT COUNT(*) FROM `users`" . $where)->fetchColumn();
+            $pager = paginate($total, 24);
+
+            $stmt = $conn->prepare("SELECT id, username, pfp FROM `users`" . $where . $order
+                . " LIMIT :limit OFFSET :offset");
+            $stmt->bindValue(':limit', (int) $pager['per_page'], PDO::PARAM_INT);
+            $stmt->bindValue(':offset', (int) $pager['offset'], PDO::PARAM_INT);
             $stmt->execute();
 
-            // Fetch and display each row
-            while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-                printPerson($row['id']);
+            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            if (empty($rows)) {
+                echo '<p><i>Nessun utente da mostrare.</i></p>';
+            }
+            foreach ($rows as $row) {
+                // La riga e' gia' in mano: passandola si evitano due query per
+                // persona che rileggevano nome e foto uno alla volta.
+                printPerson($row['id'], $row);
             }
             ?>
         </div>
     </div>
+    <?= pagination_links($pager) ?>
 </div>
 
 <?php require("footer.php"); ?>

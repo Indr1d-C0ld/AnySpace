@@ -8,17 +8,19 @@ login_check();
 
 $userId = $_SESSION['userId']; //needed by ../core/components/comments_table.php
 $toid = isset($_GET['id']) ? (int)$_GET['id'] : 0; 
-$comments = fetchComments($toid);
+$pager = paginate(countComments($toid));
+$comments = fetchComments($toid, $pager['per_page'], $pager['offset']);
 
 ?>
 
 <?php require_once("header.php") ?>
 
 <div class="simple-container">
-    <h1>Commenti degli Amici di <?= fetchName($toid) ?></h1>
-    <p><a href="profile.php?id=<?= $toid ?>">&laquo; Torna al Profilo di <?= fetchName($toid) ?></a></p>
+    <h1>Commenti degli Amici di <?= htmlspecialchars(fetchName($toid)) ?></h1>
+    <p><a href="profile.php?id=<?= (int) $toid ?>">&laquo; Torna al Profilo di <?= htmlspecialchars(fetchName($toid)) ?></a></p>
     <br>
     <?php include "../core/components/comments_table.php" ?>
+    <?= pagination_links($pager) ?>
 </div>
 
 <?php require_once("footer.php") ?>

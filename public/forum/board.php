@@ -14,7 +14,8 @@ if (!$board) {
     exit;
 }
 
-$threads = fetchThreadsByBoard($boardId);
+$pager = paginate(countThreadsByBoard($boardId));
+$threads = fetchThreadsByBoard($boardId, $pager['per_page'], $pager['offset']);
 ?>
 <?php require("forum-header.php"); ?>
 
@@ -50,6 +51,7 @@ $threads = fetchThreadsByBoard($boardId);
                 <?php endforeach; ?>
             </tbody>
         </table>
+        <?= pagination_links($pager) ?>
     <?php endif; ?>
 </div>
 

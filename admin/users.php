@@ -21,7 +21,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['user_id'])) {
     }
 }
 
-$users = fetchUsers();
+$pager = paginate(countUsers(), 30);
+$users = fetchUsers($pager['per_page'], $pager['offset']);
 ?>
 
 
@@ -131,8 +132,7 @@ th, td {
 
           </tbody>
   </table>
-    <div class="pagination">
-      </div>
+        <?= pagination_links($pager) ?>
 </div>
 
     </div>

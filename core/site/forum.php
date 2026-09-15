@@ -59,14 +59,28 @@ function createBoard($name, $description) {
     return $stmt->execute(array($name, trim(strip_tags($description)), $nextPosition));
 }
 
-function fetchThreadsByBoard($boardId) {
+function fetchThreadsByBoard($boardId, $limit = null, $offset = 0) {
     global $conn;
-    $stmt = $conn->prepare(
-        "SELECT t.*, (SELECT COUNT(*) FROM forum_posts p WHERE p.thread_id = t.id) AS reply_count "
-        . "FROM forum_threads t WHERE t.board_id = ? ORDER BY t.pinned DESC, t.last_post_at DESC"
-    );
-    $stmt->execute(array($boardId));
+    $sql = "SELECT t.*, (SELECT COUNT(*) FROM forum_posts p WHERE p.thread_id = t.id) AS reply_count "
+        . "FROM forum_threads t WHERE t.board_id = :board ORDER BY t.pinned DESC, t.last_post_at DESC";
+    if ($limit !== null) {
+        $sql .= " LIMIT :limit OFFSET :offset";
+    }
+    $stmt = $conn->prepare($sql);
+    $stmt->bindValue(':board', (int) $boardId, PDO::PARAM_INT);
+    if ($limit !== null) {
+        $stmt->bindValue(':limit', (int) $limit, PDO::PARAM_INT);
+        $stmt->bindValue(':offset', (int) $offset, PDO::PARAM_INT);
+    }
+    $stmt->execute();
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
+function countThreadsByBoard($boardId) {
+    global $conn;
+    $stmt = $conn->prepare("SELECT COUNT(*) FROM forum_threads WHERE board_id = ?");
+    $stmt->execute(array($boardId));
+    return (int) $stmt->fetchColumn();
 }
 
 function fetchThread($id) {
@@ -76,11 +90,27 @@ function fetchThread($id) {
     return $stmt->fetch(PDO::FETCH_ASSOC);
 }
 
-function fetchPostsByThread($threadId) {
+function fetchPostsByThread($threadId, $limit = null, $offset = 0) {
     global $conn;
-    $stmt = $conn->prepare("SELECT * FROM forum_posts WHERE thread_id = ? ORDER BY date ASC");
-    $stmt->execute(array($threadId));
+    $sql = "SELECT * FROM forum_posts WHERE thread_id = :thread ORDER BY date ASC";
+    if ($limit !== null) {
+        $sql .= " LIMIT :limit OFFSET :offset";
+    }
+    $stmt = $conn->prepare($sql);
+    $stmt->bindValue(':thread', (int) $threadId, PDO::PARAM_INT);
+    if ($limit !== null) {
+        $stmt->bindValue(':limit', (int) $limit, PDO::PARAM_INT);
+        $stmt->bindValue(':offset', (int) $offset, PDO::PARAM_INT);
+    }
+    $stmt->execute();
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
+function countPostsByThread($threadId) {
+    global $conn;
+    $stmt = $conn->prepare("SELECT COUNT(*) FROM forum_posts WHERE thread_id = ?");
+    $stmt->execute(array($threadId));
+    return (int) $stmt->fetchColumn();
 }
 
 function createThread($boardId, $authorId, $title, $firstPostText) {

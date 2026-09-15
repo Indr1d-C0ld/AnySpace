@@ -203,40 +203,55 @@ function deleteBlogEntry($entryId, $authorId) {
  * escludono sempre i post "solo con il link", che devono essere raggiungibili
  * unicamente conoscendone l'indirizzo.
  */
-function fetchAllBlogEntries($limit = null, $viewerId = 0) {
+function fetchAllBlogEntries($limit = null, $viewerId = 0, $offset = 0) {
     global $conn;
     $query = "SELECT * FROM `blogs` WHERE " . blogVisibilitySql($viewerId) . " ORDER BY date DESC";
     if ($limit !== null) {
-        $query .= " LIMIT :limit";
+        $query .= " LIMIT :limit OFFSET :offset";
     }
     $stmt = $conn->prepare($query);
 
     if ($limit !== null) {
-        $stmt->bindParam(':limit', $limit, PDO::PARAM_INT);
+        $stmt->bindValue(':limit', (int) $limit, PDO::PARAM_INT);
+        $stmt->bindValue(':offset', (int) $offset, PDO::PARAM_INT);
     }
 
     $stmt->execute();
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
-function fetchBlogEntries($authorId, $limit = null, $viewerId = 0)
+/** Totale dei post visibili a $viewerId, per calcolare il numero di pagine. */
+function countAllBlogEntries($viewerId = 0) {
+    global $conn;
+    return (int) $conn->query("SELECT COUNT(*) FROM `blogs` WHERE " . blogVisibilitySql($viewerId))->fetchColumn();
+}
+
+function fetchBlogEntries($authorId, $limit = null, $viewerId = 0, $offset = 0)
 {
     global $conn;
     $query = "SELECT * FROM `blogs` WHERE author = :authorId AND " . blogVisibilitySql($viewerId)
         . " ORDER BY id DESC";
     if ($limit !== null) {
-        $query .= " LIMIT :limit";
+        $query .= " LIMIT :limit OFFSET :offset";
     }
 
     $stmt = $conn->prepare($query);
 
-    $stmt->bindParam(':authorId', $authorId);
+    $stmt->bindValue(':authorId', $authorId);
     if ($limit !== null) {
-        $stmt->bindParam(':limit', $limit, PDO::PARAM_INT);
+        $stmt->bindValue(':limit', (int) $limit, PDO::PARAM_INT);
+        $stmt->bindValue(':offset', (int) $offset, PDO::PARAM_INT);
     }
 
     $stmt->execute();
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
+function countBlogEntries($authorId, $viewerId = 0) {
+    global $conn;
+    $stmt = $conn->prepare("SELECT COUNT(*) FROM `blogs` WHERE author = :authorId AND " . blogVisibilitySql($viewerId));
+    $stmt->execute(array(':authorId' => $authorId));
+    return (int) $stmt->fetchColumn();
 }
 
 function fetchBlogEntry($entryId)
@@ -283,21 +298,22 @@ function getCategoryName($categoryId) {
     return isset($categories[$categoryId]) ? $categories[$categoryId] : '';
 }
 
-function fetchBlogEntriesByCategory($categoryId, $limit = null, $viewerId = 0) {
+function fetchBlogEntriesByCategory($categoryId, $limit = null, $viewerId = 0, $offset = 0) {
     global $conn;
     // Update the query to filter by category
     $query = "SELECT * FROM `blogs` WHERE category = :categoryId AND " . blogVisibilitySql($viewerId)
         . " ORDER BY id DESC";
     if ($limit !== null) {
-        $query .= " LIMIT :limit";
+        $query .= " LIMIT :limit OFFSET :offset";
     }
 
     $stmt = $conn->prepare($query);
 
     // Bind the categoryId parameter
-    $stmt->bindParam(':categoryId', $categoryId, PDO::PARAM_INT);
+    $stmt->bindValue(':categoryId', (int) $categoryId, PDO::PARAM_INT);
     if ($limit !== null) {
-        $stmt->bindParam(':limit', $limit, PDO::PARAM_INT);
+        $stmt->bindValue(':limit', (int) $limit, PDO::PARAM_INT);
+        $stmt->bindValue(':offset', (int) $offset, PDO::PARAM_INT);
     }
 
     $stmt->execute();
@@ -305,3 +321,10 @@ function fetchBlogEntriesByCategory($categoryId, $limit = null, $viewerId = 0) {
 }
 
 
+
+function countBlogEntriesByCategory($categoryId, $viewerId = 0) {
+    global $conn;
+    $stmt = $conn->prepare("SELECT COUNT(*) FROM `blogs` WHERE category = :categoryId AND " . blogVisibilitySql($viewerId));
+    $stmt->execute(array(':categoryId' => (int) $categoryId));
+    return (int) $stmt->fetchColumn();
+}

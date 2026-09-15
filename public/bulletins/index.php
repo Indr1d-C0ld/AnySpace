@@ -8,7 +8,8 @@ require_once("../../core/site/comment.php");
 login_check();
 
 $userId = $_SESSION['userId'];
-$bulletins = fetchAllFriendBulletins($userId);
+$pager = paginate(countAllFriendBulletins($userId));
+$bulletins = fetchAllFriendBulletins($userId, $pager['per_page'], $pager['offset']);
 $highlightedEntry = 1;
 
 ?>
@@ -59,6 +60,7 @@ $highlightedEntry = 1;
 
           </tbody>
   </table>
+  <?= pagination_links($pager) ?>
     <div class="pagination">
       </div>
       <?php else: ?>

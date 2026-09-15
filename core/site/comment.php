@@ -73,23 +73,32 @@ function fetchComment($commentId)
     return $stmt->fetch(PDO::FETCH_ASSOC);
 }
 
-function fetchComments($toid, $limit=null)
+function fetchComments($toid, $limit=null, $offset = 0)
 {
     global $conn;
     $query = "SELECT * FROM `comments` WHERE toid = :toid AND parent_id = 0 ORDER BY id DESC";
     if ($limit !== null) {
-        $query .= " LIMIT :limit";
+        $query .= " LIMIT :limit OFFSET :offset";
     }
 
     $stmt = $conn->prepare($query);
 
-    $stmt->bindParam(':toid', $toid);
+    $stmt->bindValue(':toid', $toid);
     if ($limit !== null) {
-        $stmt->bindParam(':limit', $limit, PDO::PARAM_INT);
+        $stmt->bindValue(':limit', (int) $limit, PDO::PARAM_INT);
+        $stmt->bindValue(':offset', (int) $offset, PDO::PARAM_INT);
     }
 
     $stmt->execute();
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
+/** Conteggio dei commenti di primo livello: evita di caricarli tutti solo per contarli. */
+function countComments($toid) {
+    global $conn;
+    $stmt = $conn->prepare("SELECT COUNT(*) FROM `comments` WHERE toid = ? AND parent_id = 0");
+    $stmt->execute(array($toid));
+    return (int) $stmt->fetchColumn();
 }
 
 function fetchBlogComment($commentId)

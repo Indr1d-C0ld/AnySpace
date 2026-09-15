@@ -75,7 +75,7 @@ function fetchAllBulletins($limit=null) {
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
-function fetchAllFriendBulletins($userId, $limit=null) {
+function fetchAllFriendBulletins($userId, $limit=null, $offset = 0) {
     global $conn;
 
     $friendIds = array();
@@ -89,39 +89,67 @@ function fetchAllFriendBulletins($userId, $limit=null) {
     }
     $friendIds[] = $userId; 
     
-    $query = "SELECT * FROM `bulletins` WHERE `author` IN (" . implode(",", $friendIds) . ") AND (expires_at IS NULL OR expires_at > NOW()) ORDER BY `date` DESC";
+    // Gli id vengono dal database e sono castati a intero prima di finire
+    // nella lista IN.
+    $friendIds = array_map('intval', $friendIds);
+    $inList = implode(",", $friendIds);
+
+    $query = "SELECT * FROM `bulletins` WHERE `author` IN ($inList) AND (expires_at IS NULL OR expires_at > NOW()) ORDER BY `date` DESC";
 
     if ($limit !== null) {
-        $query .= " LIMIT :limit";
+        $query .= " LIMIT :limit OFFSET :offset";
     }
 
     $stmt = $conn->prepare($query);
 
     if ($limit !== null) {
-        $stmt->bindParam(':limit', $limit, PDO::PARAM_INT);
+        $stmt->bindValue(':limit', (int) $limit, PDO::PARAM_INT);
+        $stmt->bindValue(':offset', (int) $offset, PDO::PARAM_INT);
     }
 
     $stmt->execute();
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
-function fetchBulletinByAuthor($authorId, $limit=null)
+/** Totale dei bulletin non scaduti di $userId e dei suoi amici. */
+function countAllFriendBulletins($userId) {
+    global $conn;
+    $friendIds = array();
+    foreach (fetchUserFriends($userId) as $friend) {
+        $friendIds[] = ($friend['sender'] == $userId) ? $friend['receiver'] : $friend['sender'];
+    }
+    $friendIds[] = $userId;
+    $inList = implode(",", array_map('intval', $friendIds));
+    return (int) $conn->query(
+        "SELECT COUNT(*) FROM `bulletins` WHERE `author` IN ($inList) AND (expires_at IS NULL OR expires_at > NOW())"
+    )->fetchColumn();
+}
+
+function fetchBulletinByAuthor($authorId, $limit=null, $offset = 0)
 {
     global $conn;
     $query = "SELECT * FROM `bulletins` WHERE author = :authorId AND (expires_at IS NULL OR expires_at > NOW()) ORDER BY id DESC";
     if ($limit !== null) {
-        $query .= " LIMIT :limit";
+        $query .= " LIMIT :limit OFFSET :offset";
     }
 
     $stmt = $conn->prepare($query);
 
-    $stmt->bindParam(':authorId', $authorId);
+    $stmt->bindValue(':authorId', $authorId);
     if ($limit !== null) {
-        $stmt->bindParam(':limit', $limit, PDO::PARAM_INT);
+        $stmt->bindValue(':limit', (int) $limit, PDO::PARAM_INT);
+        $stmt->bindValue(':offset', (int) $offset, PDO::PARAM_INT);
     }
 
     $stmt->execute();
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
+function countBulletinByAuthor($authorId) {
+    global $conn;
+    $stmt = $conn->prepare("SELECT COUNT(*) FROM `bulletins` WHERE author = ? AND (expires_at IS NULL OR expires_at > NOW())");
+    $stmt->execute(array($authorId));
+    return (int) $stmt->fetchColumn();
 }
 
 function fetchBulletin($entryId)

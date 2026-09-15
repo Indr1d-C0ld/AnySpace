@@ -93,7 +93,7 @@ if (!empty($userInfo['private']) && !$isOwnProfile && !$isFriend && !$isAdminVie
 $toid = $profileId;
 $comments = fetchComments($profileId, 20);
 $countComments = count($comments);
-$countTotalComments = count(fetchComments($profileId));
+$countTotalComments = countComments($profileId);
 
 $blogEntries = fetchBlogEntries($profileId, 4, $userId);
 $statusInfo = fetchUserStatus($profileId);
@@ -272,8 +272,10 @@ if ($userId !== null) {
                                         <p><?= htmlspecialchars($statusInfo['you']) ?>
                                         </p>
                                     <?php endif; ?>
+<?php if (isUserOnline($userInfo['lastactive'])): ?>
                                     <p class="online"><img src="static/img/green_person.png" aria-hidden="true" alt="Online icon" loading="lazy">
                                         IN LINEA!</p>
+                <?php endif; ?>
                                 </div>
                             </div>
             <!-- AUDIO -->

@@ -5,9 +5,20 @@ require_once("../../core/site/user.php");
 require_once("../../core/site/blog.php");
 require_once("../../core/site/comment.php");
 
-$blogEntries = fetchAllBlogEntries(null, isset($_SESSION["userId"]) ? $_SESSION["userId"] : 0);
-$highlightedEntry = !empty($blogEntries) ? $blogEntries[0]['id'] : null;
-$higlighted = $highlightedEntry ? fetchBlogEntry($highlightedEntry) : null;
+$viewerId = isset($_SESSION["userId"]) ? $_SESSION["userId"] : 0;
+$pager = paginate(countAllBlogEntries($viewerId));
+$blogEntries = fetchAllBlogEntries($pager['per_page'], $viewerId, $pager['offset']);
+
+// Il post "in evidenza" è il più recente, e si mostra solo sulla prima
+// pagina. Veniva ripreso anche in cima all'elenco sottostante, quindi
+// compariva due volte di fila su ogni pagina: qui viene tolto dall'elenco
+// per non duplicarlo.
+$higlighted = null;
+$highlightedEntry = null;
+if ($pager['page'] === 1 && !empty($blogEntries)) {
+    $higlighted = array_shift($blogEntries);
+    $highlightedEntry = $higlighted['id'];
+}
 
 
   ?>
@@ -37,7 +48,7 @@ $higlighted = $highlightedEntry ? fetchBlogEntry($highlightedEntry) : null;
         <li><a href="category.php?id=4">Finanza</a></li>
         <li><a href="category.php?id=5">Cibo</a></li>
         <li><a href="category.php?id=6">Giochi</a></li>
-        <li><a href="category.php?id=777">Vita</a></li>
+        <li><a href="category.php?id=7">Vita</a></li>
         <li><a href="category.php?id=8">Letteratura</a></li>
         <li><a href="category.php?id=9">Scienza</a></li>
         <li><a href="category.php?id=10">Film e TV</a></li>
@@ -83,7 +94,7 @@ $higlighted = $highlightedEntry ? fetchBlogEntry($highlightedEntry) : null;
           <div class="entry">
              <p class="publish-date">
               <time class="ago"><?= time_elapsed_string($entry['date']) ?></time>
-              &mdash; di <a href="user.php?id=<?= $entry['author'] ?>"><?= fetchName($entry['author']) ?></a>
+              &mdash; di <a href="user.php?id=<?= (int) $entry['author'] ?>"><?= htmlspecialchars(fetchName($entry['author'])) ?></a>
               &mdash; <a href="comments.php?id=<?= $entry['id'] ?>"><?= $countTotalComments ?> Commenti</a><!--&mdash; 0 Kudos -->           </p>
             <div class="inner">
               <h3 class="title">
@@ -110,13 +121,7 @@ $higlighted = $highlightedEntry ? fetchBlogEntry($highlightedEntry) : null;
         <?php endif; ?>
       </div>
     </div>
-    <div class="pagination">
-      <a class="next" rel="next" href="/?page=2">
-        <button>
-          Pagina Successiva
-        </button>
-      </a>
-    </div>
+    <?= pagination_links($pager) ?>
   </div>
 </div>
 

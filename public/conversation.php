@@ -13,15 +13,23 @@ $otherId = isset($_GET['id']) ? (int) $_GET['id'] : (isset($_POST['to']) ? (int)
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit']) && !empty($_POST['message']) && $otherId) {
     csrf_verify();
     sendMessage($userId, $otherId, $_POST['message']);
-    header("Location: conversation.php?id=$otherId");
+    header("Location: conversation.php?id=$otherId#bottom");
     exit;
 }
 
 $otherInfo = $otherId ? fetchUserInfo($otherId) : null;
 
+$pager = null;
 if ($otherId && $otherInfo) {
     markConversationRead($userId, $otherId);
-    $thread = fetchConversation($userId, $otherId);
+    // Ordine cronologico: l'ultima pagina e' quella con i messaggi recenti,
+    // quindi senza un numero di pagina esplicito si apre direttamente quella.
+    $pager = paginate(countConversation($userId, $otherId), 30);
+    if (!isset($_GET['p'])) {
+        $pager['page'] = $pager['total_pages'];
+        $pager['offset'] = ($pager['page'] - 1) * $pager['per_page'];
+    }
+    $thread = fetchConversation($userId, $otherId, $pager['per_page'], $pager['offset']);
 } else {
     $thread = array();
     $friendsList = array_merge(
@@ -49,6 +57,8 @@ if ($otherId && $otherInfo) {
                     </div>
                 <?php endforeach; ?>
             <?php endif; ?>
+            <?php if ($pager) { echo pagination_links($pager); } ?>
+            <span id="bottom"></span>
         </div>
         <form method="post" class="ctrl-enter-submit">
             <?= csrf_field() ?>
