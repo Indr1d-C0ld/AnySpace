@@ -64,20 +64,31 @@ function validateLayoutHTML($validate) {
 }
 
 // thanks dzhaugasharov https://gist.github.com/afsalrahim/bc8caf497a4b54c5d75d
+//
+// Nota importante: qui NON si applica più htmlspecialchars() all'intero
+// testo. Lo faceva la versione precedente, e in combinazione con il fatto
+// che il modulo di modifica riproponeva l'HTML *già reso* invece del testo
+// scritto dall'utente, ogni salvataggio successivo ri-scappava il risultato
+// del precedente: "<b>" diventava "&lt;b&gt;", poi "&amp;lt;b&amp;gt;", e la
+// bio degradava a testo letterale a ogni modifica.
+//
+// Ora la sorgente scritta dall'utente si conserva a parte (users.bio_source)
+// e questa funzione si limita a tradurre i bbcode. Il confine di sicurezza
+// resta HTMLPurifier, chiamato subito dopo da renderUserMarkup(): è lo stesso
+// trattamento già riservato ai post del blog, che l'HTML lo accettano da
+// sempre. Le sostituzioni che finiscono dentro un attributo (colore,
+// dimensione, url, immagine) restano comunque a set di caratteri ristretto.
 function replaceBBcodes($text) {
-    $text = htmlspecialchars($text);
-    // BBcode array
     $find = array(
         '~\[b\](.*?)\[/b\]~s',
         '~\[i\](.*?)\[/i\]~s',
         '~\[u\](.*?)\[/u\]~s',
-        '~\[quote\]([^"><]*?)\[/quote\]~s',
-        '~\[size=([^"><]*?)\](.*?)\[/size\]~s',
-        '~\[color=([^"><]*?)\](.*?)\[/color\]~s',
-        '~\[url\]((?:ftp|https?)://[^"><]*?)\[/url\]~s',
-        '~\[img\](https?://[^"><]*?\.(?:jpg|jpeg|gif|png|bmp))\[/img\]~s'
+        '~\[quote\](.*?)\[/quote\]~s',
+        '~\[size=(\d{1,3})\](.*?)\[/size\]~s',
+        '~\[color=(#?[a-zA-Z0-9]{1,20})\](.*?)\[/color\]~s',
+        '~\[url\]((?:ftp|https?)://[^"><\s]+?)\[/url\]~s',
+        '~\[img\](https?://[^"><\s]+?\.(?:jpg|jpeg|gif|png|bmp))\[/img\]~s'
     );
-    // HTML tags to replace BBcode
     $replace = array(
         '<b>$1</b>',
         '<i>$1</i>',
@@ -88,8 +99,20 @@ function replaceBBcodes($text) {
         '<a href="$1">$1</a>',
         '<img src="$1" alt="" />'
     );
-    // Replacing the BBcodes with corresponding HTML tags
     return preg_replace($find, $replace, $text);
+}
+
+/**
+ * Trasforma il testo scritto dall'utente (bbcode e/o HTML d'epoca) nell'HTML
+ * salvato in users.bio / users.who_meet e mostrato sul profilo.
+ *
+ * Deterministica e stabile: applicata al proprio risultato restituisce lo
+ * stesso risultato, quindi ri-salvare una bio non la degrada più.
+ */
+function renderUserMarkup($source) {
+    $html = replaceBBcodes((string) $source);
+    $html = str_replace(array("\r\n", "\r", "\n"), '<br>', $html);
+    return sanitize_html($html);
 }
 
 function time_elapsed_string($datetime, $full = false) {

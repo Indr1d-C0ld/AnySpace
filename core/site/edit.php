@@ -1,6 +1,8 @@
 <?php
-require_once("../core/conn.php"); 
-require_once("../lib/sqUID.php"); // php sqUID implementation. generalize long or stupid filenames
+// Percorsi relativi al file, non alla directory di lavoro: con i require
+// relativi questo modulo si caricava solo se il processo partiva da public/.
+require_once(__DIR__ . "/../conn.php");
+require_once(__DIR__ . "/../../lib/sqUID.php"); // php sqUID implementation. generalize long or stupid filenames
 
 function updateInterests($userId, $interests) {
     global $conn;
@@ -9,18 +11,29 @@ function updateInterests($userId, $interests) {
     $stmt->execute(array($jsonInterests, $userId));
 }
 
-function updateBio($userId, $bio) {
+/**
+ * Riceve il testo COSÌ COME L'HA SCRITTO L'UTENTE e salva due cose:
+ *   - bio_source : la sorgente, riproposta tale e quale nel modulo di modifica
+ *   - bio        : l'HTML reso, mostrato sul profilo
+ *
+ * Prima esisteva solo la colonna resa, e il modulo di modifica la rimetteva
+ * nella textarea come se fosse la sorgente: siccome la resa scappava l'HTML,
+ * ogni salvataggio ri-scappava il risultato del precedente e la bio si
+ * degradava progressivamente in testo letterale. Separare sorgente e resa è
+ * l'unico modo per rendere il giro stabile.
+ */
+function updateBio($userId, $source) {
     global $conn;
-    $bio = sanitize_html($bio);
-    $stmt = $conn->prepare("UPDATE users SET bio = ? WHERE id = ?");
-    $stmt->execute(array($bio, $userId));
+    $rendered = renderUserMarkup($source);
+    $stmt = $conn->prepare("UPDATE users SET bio = ?, bio_source = ? WHERE id = ?");
+    $stmt->execute(array($rendered, (string) $source, $userId));
 }
 
-function updateWhoMeet($userId, $text) {
+function updateWhoMeet($userId, $source) {
     global $conn;
-    $text = sanitize_html($text);
-    $stmt = $conn->prepare("UPDATE users SET who_meet = ? WHERE id = ?");
-    $stmt->execute(array($text, $userId));
+    $rendered = renderUserMarkup($source);
+    $stmt = $conn->prepare("UPDATE users SET who_meet = ?, who_meet_source = ? WHERE id = ?");
+    $stmt->execute(array($rendered, (string) $source, $userId));
 }
 
 function updateUserStatus($userId, $jsonStatusInfo) {

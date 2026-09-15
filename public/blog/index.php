@@ -55,8 +55,12 @@ $higlighted = $highlightedEntry ? fetchBlogEntry($highlightedEntry) : null;
   <div class="col right">
     <h1>Blog</h1>
     <div class="blog-preview">
-      <h3>[<a href="user.php?id=<?= $_SESSION['userId'] ?>">Vedi il tuo Blog</a>]</h3>
-      <h3>[<a href="newpost.php">Crea un nuovo Post</a>]</h3>
+      <?php if (isset($_SESSION['userId'])): ?>
+        <h3>[<a href="user.php?id=<?= (int) $_SESSION['userId'] ?>">Vedi il tuo Blog</a>]</h3>
+        <h3>[<a href="newpost.php">Crea un nuovo Post</a>]</h3>
+      <?php else: ?>
+        <h3>[<a href="<?= BASE_PATH ?>/login.php">Accedi per scrivere sul tuo blog</a>]</h3>
+      <?php endif; ?>
       <?php if ($higlighted): ?>
       <div class="blog-entries">
         <div class="entry">

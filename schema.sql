@@ -33,6 +33,11 @@ CREATE TABLE IF NOT EXISTS `users` (
   `is_banned` tinyint(1) NOT NULL DEFAULT 0,
   `top_friends` text NULL DEFAULT NULL,
   `who_meet` text NOT NULL DEFAULT '',
+  -- Sorgente scritta dall'utente, separata dall'HTML reso in bio/who_meet:
+  -- il modulo di modifica ripropone QUESTA, non la resa, altrimenti ogni
+  -- salvataggio ri-scappa il risultato del precedente e il testo degrada.
+  `bio_source` text NULL DEFAULT NULL,
+  `who_meet_source` text NULL DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_users_username` (`username`),
   UNIQUE KEY `uk_users_email` (`email`)

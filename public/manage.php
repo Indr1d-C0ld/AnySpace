@@ -9,8 +9,11 @@ login_check();
 
 $userInfo = fetchUserInfo($_SESSION['userId']); // Assume this function exists and fetches user info
 if ($userInfo) {
-    $bio = $userInfo['bio'];
-    $whoMeet = $userInfo['who_meet'];
+    // Nel modulo va la SORGENTE, non l'HTML reso: riproporre la resa era la
+    // causa del degrado progressivo della bio a ogni salvataggio. Il fallback
+    // sulla colonna resa copre le righe anteriori alla migrazione.
+    $bio = $userInfo['bio_source'] !== null ? $userInfo['bio_source'] : $userInfo['bio'];
+    $whoMeet = $userInfo['who_meet_source'] !== null ? $userInfo['who_meet_source'] : $userInfo['who_meet'];
     $css = $userInfo['css'];
     $userId = $userInfo['id'];
     $interests = json_decode($userInfo['interests'], true) ?: array("General" => "", "Music" => "", "Movies" => "", "Television" => "", "Books" => "", "Heroes" => "");
@@ -54,15 +57,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             }
         }
     } else if (@$_POST['bioset']) {
-        $unprocessedText = replaceBBcodes($_POST['bio']);
-        $text = str_replace(PHP_EOL, "<br>", $unprocessedText);
-        updateBio($userId, $text);
+        // Si passa il testo GREZZO: la conversione bbcode, gli a capo e la
+        // sanitizzazione sono tutti dentro updateBio(), che conserva anche la
+        // sorgente per poterla riproporre qui senza degradarla.
+        updateBio($userId, $_POST['bio']);
         header("Location: manage.php");
         exit;
     } else if (@$_POST['whomeetset']) {
-        $unprocessedText = replaceBBcodes($_POST['who_meet']);
-        $text = str_replace(PHP_EOL, "<br>", $unprocessedText);
-        updateWhoMeet($userId, $text);
+        updateWhoMeet($userId, $_POST['who_meet']);
         header("Location: manage.php");
         exit;
     } else if (@$_POST['cssset']) {
