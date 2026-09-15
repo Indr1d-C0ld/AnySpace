@@ -36,7 +36,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit'])) {
 
 <body>
     <div class="master-container">
-        <?php require_once("bulletins-navbar.php"); ?>
+        <?php require_once("../../core/components/navbar.php"); ?>
         <main>
 
 

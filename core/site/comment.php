@@ -113,23 +113,31 @@ function fetchBlogComment($commentId)
     return $stmt->fetch(PDO::FETCH_ASSOC);
 }
 
-function fetchBlogComments($toid, $limit=null)
+function fetchBlogComments($toid, $limit=null, $offset = 0)
 {
     global $conn;
     $query = "SELECT * FROM `blogcomments` WHERE toid = :toid AND parent_id = 0 ORDER BY id DESC";
     if ($limit !== null) {
-        $query .= " LIMIT :limit";
+        $query .= " LIMIT :limit OFFSET :offset";
     }
 
     $stmt = $conn->prepare($query);
 
-    $stmt->bindParam(':toid', $toid);
+    $stmt->bindValue(':toid', $toid);
     if ($limit !== null) {
-        $stmt->bindParam(':limit', $limit, PDO::PARAM_INT);
+        $stmt->bindValue(':limit', (int) $limit, PDO::PARAM_INT);
+        $stmt->bindValue(':offset', (int) $offset, PDO::PARAM_INT);
     }
 
     $stmt->execute();
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
+function countBlogComments($toid) {
+    global $conn;
+    $stmt = $conn->prepare("SELECT COUNT(*) FROM `blogcomments` WHERE toid = ? AND parent_id = 0");
+    $stmt->execute(array($toid));
+    return (int) $stmt->fetchColumn();
 }
 
 function fetchBulletinComment($commentId)
@@ -144,23 +152,31 @@ function fetchBulletinComment($commentId)
     return $stmt->fetch(PDO::FETCH_ASSOC);
 }
 
-function fetchBulletinComments($toid, $limit=null)
+function fetchBulletinComments($toid, $limit=null, $offset = 0)
 {
     global $conn;
     $query = "SELECT * FROM `bulletincomments` WHERE toid = :toid AND parent_id = 0 ORDER BY id DESC";
     if ($limit !== null) {
-        $query .= " LIMIT :limit";
+        $query .= " LIMIT :limit OFFSET :offset";
     }
 
     $stmt = $conn->prepare($query);
 
-    $stmt->bindParam(':toid', $toid);
+    $stmt->bindValue(':toid', $toid);
     if ($limit !== null) {
-        $stmt->bindParam(':limit', $limit, PDO::PARAM_INT);
+        $stmt->bindValue(':limit', (int) $limit, PDO::PARAM_INT);
+        $stmt->bindValue(':offset', (int) $offset, PDO::PARAM_INT);
     }
 
     $stmt->execute();
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
+function countBulletinComments($toid) {
+    global $conn;
+    $stmt = $conn->prepare("SELECT COUNT(*) FROM `bulletincomments` WHERE toid = ? AND parent_id = 0");
+    $stmt->execute(array($toid));
+    return (int) $stmt->fetchColumn();
 }
 
 function fetchCommentReplies($commentId, $type)

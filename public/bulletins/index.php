@@ -34,7 +34,7 @@ $highlightedEntry = 1;
     </thead>
     <tbody>
       <?php foreach ($bulletins as $entry): ?>
-                <?php $countTotalComments = count(fetchBulletinComments($entry['id'])); ?>
+                <?php $countTotalComments = countBulletinComments($entry['id']); ?>
               <tr>
           <td class="user-info ">
             <a href="../profile.php?id=<?= $entry['author'] ?>">

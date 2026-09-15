@@ -10,18 +10,23 @@
     </div>
     <div class="center">
 
-      <form>
-
-
-        <label>
-          <?= htmlspecialchars(SITE_NAME); ?>
+      <?php
+      // Il modulo di ricerca era inerte su TUTTO il sito: senza `action`
+      // si inviava alla pagina corrente invece che a search.php, e il campo
+      // si chiamava "search" mentre search.php legge $_GET['q']. Scrivere
+      // qualcosa e premere "Cerca" si limitava a ricaricare la pagina.
+      ?>
+      <form action="<?= BASE_PATH ?>/search.php" method="get" role="search">
+        <label for="nav-q">
+          Cerca su <?= htmlspecialchars(SITE_NAME); ?>:
         </label>
 
-        <label>
-          <input type="text" name="search">
-        </label>
+        <div class="search-wrapper">
+          <input id="nav-q" type="text" name="q" autocomplete="off"
+                 value="<?= isset($_GET['q']) ? htmlspecialchars($_GET['q']) : '' ?>">
+        </div>
 
-        <input class="submit-btn" type="submit" name="submit-button" value="Cerca">
+        <input class="submit-btn" type="submit" value="Cerca">
       </form>
 </div>
   <div class="right">

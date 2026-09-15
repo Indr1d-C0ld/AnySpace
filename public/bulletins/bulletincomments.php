@@ -14,7 +14,8 @@ if (!isset($_GET['id']) || empty($_GET['id'])) {
 $userId = $_SESSION['userId'];
 
 $toid = isset($_GET['id']) ? (int)$_GET['id'] : 0; // Ensure you validate and sanitize input
-$bulletinComments = fetchBulletinComments($toid);
+$pager = paginate(countBulletinComments($toid));
+$bulletinComments = fetchBulletinComments($toid, $pager['per_page'], $pager['offset']);
 $comments = $bulletinComments;
 $commentType = 'bulletin';
 
@@ -27,6 +28,7 @@ $commentType = 'bulletin';
     <p><a href="bulletin.php?id=<?= $toid ?>">&laquo; Torna al Bulletin</a></p>
     <br>
     <?php include("../../core/components/comments_table.php") ?>
+    <?= pagination_links($pager) ?>
 </div>
 
 <?php require_once("../footer.php") ?>

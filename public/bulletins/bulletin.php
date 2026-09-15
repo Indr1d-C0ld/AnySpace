@@ -28,7 +28,7 @@ $isUserAuthor = ($userId == $authorId);
 // COMMENTS
 $limitedBulletinComments = fetchBulletinComments($bulletinId, 20);
 $countComments = count($limitedBulletinComments);
-$countTotalComments = count(fetchBulletinComments($bulletinId));
+$countTotalComments = countBulletinComments($bulletinId);
 
 $comments = $limitedBulletinComments;
 $commentType = 'bulletin';

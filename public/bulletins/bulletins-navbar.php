@@ -1,1 +1,0 @@
-<?php /* im so sorry */ include("../../core/components/navbar.php") ?>

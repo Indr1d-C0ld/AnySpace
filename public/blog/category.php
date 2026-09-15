@@ -61,7 +61,7 @@ $blogEntries = fetchBlogEntriesByCategory($categoryId, $pager['per_page'], $view
       <h3>Ultimi Post del Blog</h3>
       <div class="blog-entries">
         <?php foreach ($blogEntries as $entry): ?>
-          <?php $countTotalComments = count(fetchBlogComments($entry['id'])); ?>
+          <?php $countTotalComments = countBlogComments($entry['id']); ?>
           <div class="entry">
              <p class="publish-date">
               <time class="ago"><?= time_elapsed_string($entry['date']) ?></time>

@@ -43,7 +43,7 @@ $isUserAuthor = ($userId == $authorId);
 $toid = $blogEntryId;
 $limitedBlogComments = fetchBlogComments($blogEntryId, 20);
 $countComments = count($limitedBlogComments);
-$countTotalComments = count(fetchBlogComments($blogEntryId));
+$countTotalComments = countBlogComments($blogEntryId);
 $commentType = 'blog';
 ?>
 <?php require("blog-header.php"); ?>
@@ -57,7 +57,7 @@ $commentType = 'blog';
         <!-- User Info Box -->
         <div class="edit-info">
             <div class="profile-pic">
-                <img class="pfp-fallback" src="../media/pfp/<?= $userInfo['pfp'] ?>"
+                <img class="pfp-fallback" src="../media/pfp/<?= htmlspecialchars($userInfo['pfp']) ?>"
                     alt="<?= htmlspecialchars($userInfo['username']) ?>'s profile picture" loading="lazy">
             </div>
             <div class="author-details">
@@ -78,8 +78,10 @@ $commentType = 'blog';
                     </time><br>
                 </p>
                 <p class="category">
-                  <!-- <b>Privacy:</b> <?= htmlspecialchars($blogEntry['privacy']) ?><br> !-->
-                  <b>Categoria:</b> <a href="category.php?id=<?= $blogEntry['category'] ?>"><?= getCategoryName($blogEntry['category']) ?></a>
+                  <?php if ($isUserAuthor && (int) $blogEntry['privacy_level'] !== BLOG_PUBLIC): ?>
+                    <b>Visibilità:</b> <?= htmlspecialchars(blogPrivacyLabel((int) $blogEntry['privacy_level'])) ?><br>
+                  <?php endif; ?>
+                  <b>Categoria:</b> <a href="category.php?id=<?= (int) $blogEntry['category'] ?>"><?= htmlspecialchars(getCategoryName($blogEntry['category'])) ?></a>
                 </p>
                 <p class="links">
                     <a href="user.php?id=<?= $authorId ?>">

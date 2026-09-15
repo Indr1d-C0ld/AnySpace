@@ -36,13 +36,6 @@ function fetchUserPassword($userId)
     return $stmt->fetch(PDO::FETCH_ASSOC);
 }
 
-function fetchUserBlogs($pdo, $username)
-{
-    $stmt = $pdo->prepare("SELECT * FROM `blogs` WHERE author = :author");
-    $stmt->execute(array(':author' => $username));
-    return $stmt->fetchAll(PDO::FETCH_ASSOC);
-}
-
 // attribute specific functions
 function fetchName($id) {
     global $conn; // Use the globally defined connection

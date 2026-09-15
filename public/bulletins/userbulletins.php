@@ -101,7 +101,7 @@ $isUserAuthor = ($userId == $authorId);
         </thead>
         <tbody>
                 <?php foreach ($bulletins as $entry): ?>
-                <?php $countTotalComments = count(fetchBulletinComments($entry['id'])); ?>
+                <?php $countTotalComments = countBulletinComments($entry['id']); ?>
                       <tr>
               <td>
                 <p><time class="ago"> <?= time_elapsed_string($entry['date']) ?></time></p>

@@ -18,7 +18,8 @@ if (!isset($_GET['id']) || empty($_GET['id'])) {
     $toid = $_GET['id']; 
 }
 
-$blogComments = fetchBlogComments($toid);
+$pager = paginate(countBlogComments($toid));
+$blogComments = fetchBlogComments($toid, $pager['per_page'], $pager['offset']);
 $comments = $blogComments;
 $commentType = 'blog';
 ?>
@@ -30,6 +31,7 @@ $commentType = 'blog';
     <p><a href="entry.php?id=<?= $toid ?>">&laquo; Torna al Post del Blog</a></p>
     <br>
     <?php include("../../core/components/comments_table.php"); ?>
+    <?= pagination_links($pager) ?>
 
 </div>
 

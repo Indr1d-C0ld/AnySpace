@@ -79,27 +79,41 @@ function validateLayoutHTML($validate) {
 // sempre. Le sostituzioni che finiscono dentro un attributo (colore,
 // dimensione, url, immagine) restano comunque a set di caratteri ristretto.
 function replaceBBcodes($text) {
-    $find = array(
-        '~\[b\](.*?)\[/b\]~s',
-        '~\[i\](.*?)\[/i\]~s',
-        '~\[u\](.*?)\[/u\]~s',
-        '~\[quote\](.*?)\[/quote\]~s',
-        '~\[size=(\d{1,3})\](.*?)\[/size\]~s',
-        '~\[color=(#?[a-zA-Z0-9]{1,20})\](.*?)\[/color\]~s',
-        '~\[url\]((?:ftp|https?)://[^"><\s]+?)\[/url\]~s',
-        '~\[img\](https?://[^"><\s]+?\.(?:jpg|jpeg|gif|png|bmp))\[/img\]~s'
+    // I tag che possono contenere altri tag dello stesso tipo usano un
+    // pattern che si ferma PRIMA di un'eventuale apertura annidata, e la
+    // sostituzione viene ripetuta finché cambia qualcosa: così si convertono
+    // dall'interno verso l'esterno.
+    //
+    // Con un semplice (.*?) non greedy, "[quote]a [quote]b[/quote] c[/quote]"
+    // chiudeva sulla PRIMA [/quote] e produceva
+    //     <pre>a [quote]b</pre> c[/quote]
+    // lasciando bbcode letterale a schermo.
+    $nestable = array(
+        '~\[b\]((?:(?!\[b\]|\[/b\]).)*)\[/b\]~s' => '<b>$1</b>',
+        '~\[i\]((?:(?!\[i\]|\[/i\]).)*)\[/i\]~s' => '<i>$1</i>',
+        '~\[u\]((?:(?!\[u\]|\[/u\]).)*)\[/u\]~s' => '<span style="text-decoration:underline;">$1</span>',
+        '~\[quote\]((?:(?!\[quote\]|\[/quote\]).)*)\[/quote\]~s' => '<blockquote>$1</blockquote>',
+        '~\[size=(\d{1,3})\]((?:(?!\[size=|\[/size\]).)*)\[/size\]~s' => '<span style="font-size:$1px;">$2</span>',
+        '~\[color=(#?[a-zA-Z0-9]{1,20})\]((?:(?!\[color=|\[/color\]).)*)\[/color\]~s' => '<span style="color:$1;">$2</span>',
     );
-    $replace = array(
-        '<b>$1</b>',
-        '<i>$1</i>',
-        '<span style="text-decoration:underline;">$1</span>',
-        '<pre>$1</pre>',
-        '<span style="font-size:$1px;">$2</span>',
-        '<span style="color:$1;">$2</span>',
-        '<a href="$1">$1</a>',
-        '<img src="$1" alt="" />'
+
+    // Tetto alle iterazioni: un testo molto annidato non deve poter far
+    // girare il ciclo all'infinito.
+    for ($pass = 0; $pass < 8; $pass++) {
+        $before = $text;
+        $text = preg_replace(array_keys($nestable), array_values($nestable), $text);
+        if ($text === $before) {
+            break;
+        }
+    }
+
+    // Questi non sono annidabili: il contenuto è un URL.
+    $flat = array(
+        '~\[url\]((?:ftp|https?)://[^"><\s]+?)\[/url\]~s' => '<a href="$1">$1</a>',
+        '~\[img\](https?://[^"><\s]+?\.(?:jpg|jpeg|gif|png|bmp))\[/img\]~s' => '<img src="$1" alt="" />',
     );
-    return preg_replace($find, $replace, $text);
+
+    return preg_replace(array_keys($flat), array_values($flat), $text);
 }
 
 /**
