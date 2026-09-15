@@ -7,6 +7,9 @@ require_once("../core/site/user.php");
 require("../lib/password.php"); // compatibility library for PHP 5.3
 
 $unverifiedEmail = '';
+// I messaggi venivano stampati con echo PRIMA di header.php, quindi uscivano
+// in cima alla pagina nuda, fuori dal layout del sito.
+$loginMessage = '';
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action'])) {
     if ($_POST['action'] == 'login') {
@@ -16,29 +19,41 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action'])) {
         $email = filter_var($_POST['email'], FILTER_SANITIZE_EMAIL);
         $password = $_POST['password'];
 
-        // Prepare SQL statement for login
-        $stmt = $conn->prepare("SELECT id, username, password, is_banned FROM users WHERE email = ?");
-        $stmt->execute(array($email));
-        $user = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        if ($user && password_verify($password, $user['password'])) {
-            if (!empty($user['is_banned'])) {
-                echo '<p>Questo account è stato sospeso.</p><hr>';
-            } elseif (verification_required() && !is_email_verified($user['id'])) {
-                $unverifiedEmail = $email;
-                echo '<p>Devi confermare la tua e-mail prima di poter accedere. Controlla la posta in arrivo.</p><hr>';
-            } else {
-                regenerate_session();
-                $_SESSION['user'] = $user['username'];
-                $_SESSION['userId'] = $user['id'];
-                updateLastLogon($user['id']);
-                recordSession($user['id'], $user['username']);
-
-                header("Location: home.php");
-                exit;
-            }
+        // Due contatori distinti: per indirizzo (protegge il singolo account da
+        // un attacco mirato) e per IP (frena chi prova molti indirizzi diversi).
+        $ipKey = rate_limit_client_ip();
+        if (!rate_limit_check('login', $email) || !rate_limit_check('login_ip', $ipKey)) {
+            $wait = max(rate_limit_retry_after('login', $email), rate_limit_retry_after('login_ip', $ipKey));
+            $loginMessage = rate_limit_message($wait);
         } else {
-            echo '<p>Le informazioni di accesso non esistono o la password è errata.</p><hr>';
+            // Prepare SQL statement for login
+            $stmt = $conn->prepare("SELECT id, username, password, is_banned FROM users WHERE email = ?");
+            $stmt->execute(array($email));
+            $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            if ($user && password_verify($password, $user['password'])) {
+                if (!empty($user['is_banned'])) {
+                    $loginMessage = 'Questo account è stato sospeso.';
+                } elseif (verification_required() && !is_email_verified($user['id'])) {
+                    $unverifiedEmail = $email;
+                    $loginMessage = 'Devi confermare la tua e-mail prima di poter accedere. Controlla la posta in arrivo.';
+                } else {
+                    rate_limit_clear('login', $email);
+                    rate_limit_clear('login_ip', $ipKey);
+                    regenerate_session();
+                    $_SESSION['user'] = $user['username'];
+                    $_SESSION['userId'] = $user['id'];
+                    updateLastLogon($user['id']);
+                    recordSession($user['id'], $user['username']);
+
+                    header("Location: home.php");
+                    exit;
+                }
+            } else {
+                rate_limit_hit('login', $email);
+                rate_limit_hit('login_ip', $ipKey, 20);
+                $loginMessage = 'Le informazioni di accesso non esistono o la password è errata.';
+            }
         }
     } elseif ($_POST['action'] == 'resend') {
         csrf_verify();
@@ -49,11 +64,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action'])) {
         if ($user) {
             resend_verification_email($user['id']);
         }
-        echo '<p>Se l\'indirizzo è registrato, ti abbiamo inviato una nuova e-mail di conferma.</p><hr>';
+        $loginMessage = 'Se l\'indirizzo è registrato, ti abbiamo inviato una nuova e-mail di conferma.';
     }
 }
 ?>
 <?php require_once("header.php") ?>
+<?php if ($loginMessage): ?>
+    <div class="center-container"><p><b><?= htmlspecialchars($loginMessage) ?></b></p></div>
+<?php endif; ?>
             <div class="center-container">
                 <div class="box standalone">
                     <?php if ($unverifiedEmail): ?>

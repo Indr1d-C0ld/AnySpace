@@ -7,7 +7,7 @@ require_once("../../core/site/comment.php");
 
 $categoryId = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 
-$blogEntries = fetchBlogEntriesByCategory($categoryId);
+$blogEntries = fetchBlogEntriesByCategory($categoryId, null, isset($_SESSION["userId"]) ? $_SESSION["userId"] : 0);
 
   ?>
 <?php require("blog-header.php"); ?>

@@ -1,0 +1,17 @@
+# I file in questa cartella sono caricati dagli utenti: non devono MAI essere
+# eseguiti dal server, qualunque estensione abbiano. La validazione in
+# core/site/edit.php verifica il contenuto reale, ma un file "polyglot"
+# (es. un GIF valido con codice PHP in coda) supera qualsiasi controllo di
+# tipo: l'unica difesa solida è togliere l'esecuzione a monte.
+
+# Apache 2.4 con mod_php
+php_flag engine off
+
+# Apache con PHP-FPM / altri handler: rimuove ogni associazione a un handler
+RemoveHandler .php .phtml .php3 .php4 .php5 .php7 .php8 .phps
+RemoveType .php .phtml .php3 .php4 .php5 .php7 .php8 .phps
+AddType text/plain .php .phtml .php3 .php4 .php5 .php7 .php8 .phps
+
+<FilesMatch "\.(php|phtml|php[3-8]|phps|cgi|pl|py|sh)$">
+    Require all denied
+</FilesMatch>

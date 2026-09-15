@@ -180,21 +180,27 @@ function fetchCommentReplies($commentId, $type)
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
-function deleteComment($commentId, $authorId) {
+/**
+ * Elimina un commento lasciato su un profilo. $actorId è chi sta agendo:
+ * oltre all'autore del commento, può essere il proprietario del profilo su
+ * cui il commento è stato lasciato (colonna toid) o l'amministratore.
+ *
+ * L'interfaccia mostrava già il pulsante "Elimina" al padrone di casa, ma la
+ * cancellazione filtrava solo per autore: il pulsante rimandava indietro
+ * senza cancellare nulla, e sul proprio profilo non si poteva moderare niente.
+ */
+function deleteComment($commentId, $actorId) {
     global $conn;
     try {
-        $stmt = $conn->prepare("DELETE FROM comments WHERE id = ? AND author = ?");
-        
-        $stmt->bindParam(1, $commentId, PDO::PARAM_INT);
-        $stmt->bindParam(2, $authorId, PDO::PARAM_INT);
-
-        if ($stmt->execute()) {
-            echo "<p>Comment successfully deleted!</p>";
-        } else {
-            echo "<p>There was a problem deleting your comment.</p>";
-        }
+        $isAdmin = ((int) $actorId === (int) ADMIN_USER) ? 1 : 0;
+        $stmt = $conn->prepare(
+            "DELETE FROM comments WHERE id = :id AND (author = :actor OR toid = :actor OR :isAdmin = 1)"
+        );
+        $stmt->execute(array(':id' => $commentId, ':actor' => $actorId, ':isAdmin' => $isAdmin));
+        return $stmt->rowCount() > 0;
     } catch (PDOException $e) {
-        echo "<p>Error: " . $e->getMessage() . "</p>";
+        error_log('deleteComment fallita: ' . $e->getMessage());
+        return false;
     }
 }
 

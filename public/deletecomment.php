@@ -16,12 +16,22 @@ if (!$commentId) {
 }
 
 $comment = fetchComment($commentId);
+
+if (!$comment) {
+    header("Location: home.php");
+    exit;
+}
+
 $authorId = $comment['author'];
 
-$isUserAuthor = ($userId == $authorId);
+// Può cancellare chi ha scritto il commento, il proprietario del profilo su
+// cui è stato lasciato (moderazione di casa propria) e l'amministratore. Il
+// template mostrava già il pulsante "Elimina" al padrone di casa, ma qui
+// passava solo l'autore: il pulsante rimandava indietro senza fare nulla.
+$isUserAuthor = ($userId == $authorId)
+    || ($userId == $comment['toid'])
+    || ((int) $userId === (int) ADMIN_USER);
 
-// We don't want to offer the delete page to non-authors. the deleteComment() function also checks whether the user
-// making the action is the author in the sql statement
 if (!$isUserAuthor) {
     header("Location: comments.php?id=" . $comment['toid']);
     exit;

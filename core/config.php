@@ -10,4 +10,7 @@
 if (!defined('ANYSPACE_CONFIG_FILE')) {
     define('ANYSPACE_CONFIG_FILE', '/data/anyspace/config/config.php');
 }
+if (!defined('ANYSPACE_EMAIL_CONFIG_FILE')) {
+    define('ANYSPACE_EMAIL_CONFIG_FILE', '/data/anyspace/config/email_config.php');
+}
 extract(require ANYSPACE_CONFIG_FILE);

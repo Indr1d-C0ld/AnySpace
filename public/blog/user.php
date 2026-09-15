@@ -15,7 +15,7 @@ if (!isset($_GET['id'])) {
 
 $userId = $_SESSION['userId'];
 
-$blogEntries = fetchBlogEntries($authorId, $limit = null);
+$blogEntries = fetchBlogEntries($authorId, null, isset($_SESSION["userId"]) ? $_SESSION["userId"] : 0);
 $userInfo = fetchUserInfo($authorId);
 $statusInfo = fetchUserStatus($authorId);
 $isUserAuthor = ($userId == $authorId);

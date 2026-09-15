@@ -6,7 +6,7 @@
 function anyspace_email_config() {
     static $config = null;
     if ($config === null) {
-        $config = require '/data/anyspace/config/email_config.php';
+        $config = require ANYSPACE_EMAIL_CONFIG_FILE;
     }
     return $config;
 }

@@ -7,6 +7,10 @@
 //   extract(require '/percorso/fuori/dal/docroot/config.php');
 //
 // Non lasciare mai questo file (con valori reali) dentro il docroot.
+//
+// Il percorso di QUESTO file e quello di email_config.php sono definiti come
+// costanti (ANYSPACE_CONFIG_FILE e ANYSPACE_EMAIL_CONFIG_FILE) in
+// core/config.php: se li sposti, cambia solo quelle due righe.
 return array(
     // Connessione al database (MySQL/MariaDB)
     'host'     => 'localhost',

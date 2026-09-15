@@ -10,7 +10,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     csrf_verify();
     $email = filter_var($_POST['email'], FILTER_SANITIZE_EMAIL);
     if (!empty($email)) {
-        send_password_reset_email_by_address($email);
+        // Senza freno questo modulo permetteva di bombardare di e-mail un
+        // indirizzo registrato. La risposta all'utente resta identica in
+        // entrambi i casi, per non rivelare quali indirizzi sono iscritti.
+        $ipKey = rate_limit_client_ip();
+        if (rate_limit_check('reset', $email) && rate_limit_check('reset_ip', $ipKey)) {
+            send_password_reset_email_by_address($email);
+            rate_limit_hit('reset', $email, 3, 3600, 3600);
+            rate_limit_hit('reset_ip', $ipKey, 10, 3600, 3600);
+        }
         $sent = true;
     }
 }

@@ -37,7 +37,6 @@ $userInterests = $userInfo['interests'];
 $interests = json_decode($userInterests, true);
 
 // Fetch blogs and friends using the user's username
-$blogs = fetchUserBlogs($conn, $user);
 
 $friends = array_merge(
     fetchFriends($conn, 'ACCEPTED', 'receiver', $profileId),
@@ -96,7 +95,7 @@ $comments = fetchComments($profileId, 20);
 $countComments = count($comments);
 $countTotalComments = count(fetchComments($profileId));
 
-$blogEntries = fetchBlogEntries($profileId, 4);
+$blogEntries = fetchBlogEntries($profileId, 4, $userId);
 $statusInfo = fetchUserStatus($profileId);
 
 if ($userId != $profileId) {

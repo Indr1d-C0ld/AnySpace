@@ -219,3 +219,18 @@ CREATE TABLE IF NOT EXISTS `sessions` (
   UNIQUE KEY `uk_sessions_session_id` (`session_id`),
   KEY `ix_sessions_user_id` (`user_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Limitazione dei tentativi su login, registrazione e reset password.
+-- La tabella viene creata automaticamente al primo utilizzo da
+-- core/ratelimit.php: è qui per completezza dello schema.
+CREATE TABLE IF NOT EXISTS `rate_limits` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `bucket` varchar(64) NOT NULL,
+  `identifier` varchar(190) NOT NULL,
+  `attempts` int(11) NOT NULL DEFAULT 0,
+  `first_attempt` datetime NOT NULL,
+  `blocked_until` datetime NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_rate_limits` (`bucket`,`identifier`),
+  KEY `ix_rate_limits_first` (`first_attempt`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

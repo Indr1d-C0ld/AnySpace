@@ -5,7 +5,7 @@ require_once("../../core/site/user.php");
 require_once("../../core/site/blog.php");
 require_once("../../core/site/comment.php");
 
-$blogEntries = fetchAllBlogEntries();
+$blogEntries = fetchAllBlogEntries(null, isset($_SESSION["userId"]) ? $_SESSION["userId"] : 0);
 $highlightedEntry = !empty($blogEntries) ? $blogEntries[0]['id'] : null;
 $higlighted = $highlightedEntry ? fetchBlogEntry($highlightedEntry) : null;
 

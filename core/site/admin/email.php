@@ -1,7 +1,7 @@
 <?php
 
 function get_email_config() {
-    $config_file = '/data/anyspace/config/email_config.php';
+    $config_file = ANYSPACE_EMAIL_CONFIG_FILE;
     if (file_exists($config_file)) {
         return include($config_file);
     }
@@ -16,7 +16,7 @@ function get_email_config() {
 }
 
 function update_email_config($new_config) {
-    $config_file = '/data/anyspace/config/email_config.php';
+    $config_file = ANYSPACE_EMAIL_CONFIG_FILE;
     $config = get_email_config();
     
     // Update only the provided fields

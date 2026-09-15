@@ -127,16 +127,34 @@ function createPost($threadId, $authorId, $text) {
     return $ok;
 }
 
-function deleteThread($threadId, $authorId) {
+/**
+ * $actorId e' chi sta agendo: l'autore della discussione oppure
+ * l'amministratore. Finora poteva cancellare solo l'autore, quindi un
+ * messaggio di spam restava online finche' non lo rimuoveva chi l'aveva
+ * scritto: il forum non aveva alcuna moderazione.
+ */
+function deleteThread($threadId, $actorId) {
     global $conn;
-    $stmt = $conn->prepare("DELETE FROM forum_posts WHERE thread_id = (SELECT id FROM (SELECT id FROM forum_threads WHERE id = ? AND author = ?) t)");
-    $stmt->execute(array($threadId, $authorId));
-    $stmt = $conn->prepare("DELETE FROM forum_threads WHERE id = ? AND author = ?");
-    return $stmt->execute(array($threadId, $authorId));
+    $isAdmin = ((int) $actorId === (int) ADMIN_USER) ? 1 : 0;
+
+    $stmt = $conn->prepare(
+        "SELECT id FROM forum_threads WHERE id = :id AND (author = :actor OR :isAdmin = 1)"
+    );
+    $stmt->execute(array(':id' => $threadId, ':actor' => $actorId, ':isAdmin' => $isAdmin));
+    if (!$stmt->fetch()) {
+        return false;
+    }
+
+    $conn->prepare("DELETE FROM forum_posts WHERE thread_id = ?")->execute(array($threadId));
+    return $conn->prepare("DELETE FROM forum_threads WHERE id = ?")->execute(array($threadId));
 }
 
-function deletePost($postId, $authorId) {
+function deletePost($postId, $actorId) {
     global $conn;
-    $stmt = $conn->prepare("DELETE FROM forum_posts WHERE id = ? AND author = ?");
-    return $stmt->execute(array($postId, $authorId));
+    $isAdmin = ((int) $actorId === (int) ADMIN_USER) ? 1 : 0;
+    $stmt = $conn->prepare(
+        "DELETE FROM forum_posts WHERE id = :id AND (author = :actor OR :isAdmin = 1)"
+    );
+    $stmt->execute(array(':id' => $postId, ':actor' => $actorId, ':isAdmin' => $isAdmin));
+    return $stmt->rowCount() > 0;
 }

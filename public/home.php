@@ -15,7 +15,6 @@ $user = $userInfo ? $userInfo['username'] : '';
 $userId = $userInfo['id'];
 
 // Fetch blogs and friends using the user's username
-$blogs = fetchUserBlogs($conn, $user);
 
 // FRIENDS
 $pendingRequests = fetchFriends($conn, 'PENDING', 'receiver', $userId);
@@ -36,7 +35,7 @@ $sinceJoined = time_elapsed_string($userInfo['date']);
 $profileViews = 0;
 
 // Blogs & Bulletins
-$blogEntries = fetchBlogEntries($userId, 5);
+$blogEntries = fetchBlogEntries($userId, 5, $userId);
 $bulletins = fetchAllFriendBulletins($userId, 5);
 
 ?>

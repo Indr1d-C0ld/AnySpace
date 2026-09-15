@@ -9,19 +9,33 @@ if (!isset($_GET['id'])) {
     header("Location: index.php");
     exit;
 } else {
-    $blogEntryId = $_GET['id'];
+    $blogEntryId = (int) $_GET['id'];
 }
 
 $blogEntry = fetchBlogEntry($blogEntryId);
-$authorId = $blogEntry['author'];
-
-$userInfo = fetchUserInfo($authorId);
 
 if (!isset($_SESSION['userId'])) {
     $userId = null;
 } else {
     $userId = $_SESSION['userId'];
 }
+
+// Post inesistente, oppure riservato a una cerchia di cui il lettore non fa
+// parte (livelli in core/site/blog.php). I post "solo con il link" restano
+// raggiungibili da qui: non compaiono negli elenchi, ma chi ha l'indirizzo
+// li apre — è esattamente il loro scopo.
+if (!$blogEntry || !canViewBlogEntry($blogEntry, (int) $userId)) {
+    http_response_code(404);
+    require("blog-header.php");
+    echo '<div class="simple-container"><h1>Post non disponibile</h1>'
+        . '<p>Questo post non esiste, oppure il suo autore ne ha limitato la visibilità.</p>'
+        . '<p><a href="index.php">Torna al Blog</a></p></div>';
+    require("../footer.php");
+    exit;
+}
+
+$authorId = $blogEntry['author'];
+$userInfo = fetchUserInfo($authorId);
 
 $isUserAuthor = ($userId == $authorId);
 

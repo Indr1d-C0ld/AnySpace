@@ -95,37 +95,40 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit'])) {
             <div>
               <textarea class="tb_wysiwyg" id="wysiwyg" name="content"></textarea>
             </div>
-            <!--
-      <label for="privacy"><u>Privacy:</u></label>
-      <div id="privacy">
-        <input type="radio" id="option1" name="privacy" value="public" checked="checked">
-        <label for="option1">Public</label>
-        <p>Everyone will be able to see your Blog Entry.</p>
+            <label for="privacy"><u>Privacy:</u></label>
+            <div id="privacy">
+              <input type="radio" id="option1" name="privacy" value="public" checked="checked">
+              <label for="option1">Pubblico</label>
+              <p>Chiunque potra' leggere questo post.</p>
 
-        <input type="radio" id="option2" name="privacy" value="diary" >
-        <label for="option2">Diary (Private)</label>
-        <p>Only you will be able to see your Blog Entry.</p>
+              <input type="radio" id="option2" name="privacy" value="diary">
+              <label for="option2">Diario (privato)</label>
+              <p>Solo tu potrai leggere questo post.</p>
 
-        <input type="radio" id="option3" name="privacy" value="friends" >
-        <label for="option3">Friends</label>
-        <p>Only your Friends will be able to see your Blog Entry.</p>
+              <input type="radio" id="option3" name="privacy" value="friends">
+              <label for="option3">Solo Amici</label>
+              <p>Solo i tuoi Amici potranno leggere questo post.</p>
 
-        <input type="radio" id="option4" name="privacy" value="favorites" >
-        <label for="option4">Favorites List</label>
-        <p>Only the Users on your "Favorites" List will be able to see your Blog Entry.</p>
+              <input type="radio" id="option4" name="privacy" value="favorites">
+              <label for="option4">Solo Preferiti</label>
+              <p>Solo gli utenti che hai aggiunto ai tuoi Preferiti potranno leggere questo post.</p>
 
-        <input type="radio" id="option5" name="privacy" value="link" >
-        <label for="option5">Link-only</label>
-        <p>Only People who know the Link to your Blog entry will be able to see it. It won't be listed on SITE_NAME or on the category pages and on your blog page.</p>
-      </div>
-      <br>
-      <label for="comments"><u>Comments:</u></label>
+              <input type="radio" id="option5" name="privacy" value="link">
+              <label for="option5">Solo con il link</label>
+              <p>Il post non comparira' negli elenchi (Blog, categorie, il tuo profilo): lo leggera' solo chi conosce l'indirizzo diretto.</p>
+            </div>
+            <br>
+            <!-- L'attivazione/disattivazione dei commenti resta commentata: a
+                 differenza della privacy non ha una colonna che la sostenga nel
+                 database, e un'opzione che non fa nulla e' peggio di
+                 un'opzione assente.
+      <label for="comments"><u>Commenti:</u></label>
       <div id="comments" class="comments">
         <input type="radio" id="enable_comments" name="comments" value="enabled" checked="checked">
-        <label for="enable_comments">Enable Comments</label>
+        <label for="enable_comments">Abilita i commenti</label>
 
         <input type="radio" id="disable_comments" name="comments" value="disabled" >
-        <label for="disable_comments">Disable Comments</label>
+        <label for="disable_comments">Disabilita i commenti</label>
       </div>
 -->
 
